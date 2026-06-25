@@ -343,18 +343,25 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
 // ── MINI CHART (인라인 Chart.js 대체) ─────────────────────────
 (function () {
   'use strict';
+  var _tip = document.createElement('div');
+  _tip.style.cssText = 'position:fixed;background:#1f2937;color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;pointer-events:none;display:none;z-index:9998;box-shadow:0 4px 16px rgba(0,0,0,.25);line-height:1.8;white-space:nowrap;min-width:80px;';
+  document.addEventListener('DOMContentLoaded', function () { document.body.appendChild(_tip); });
+  if (document.readyState !== 'loading') document.body.appendChild(_tip);
+
   function MiniChart(canvas, config) {
     this.canvas = canvas;
     this.config = config;
+    this._hitPts = null;
+    this._hitBars = null;
     this._ro = new ResizeObserver(function () { this._render(); }.bind(this));
     this._ro.observe(canvas.parentElement);
+    this._bindEvents();
     this._render();
   }
   MiniChart.prototype.destroy = function () {
     this._ro.disconnect();
     var ctx = this.canvas.getContext('2d');
-    var dpr = window.devicePixelRatio || 1;
-    ctx.clearRect(0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   };
   MiniChart.prototype._setup = function () {
     var parent = this.canvas.parentElement;
@@ -403,6 +410,53 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
       );
     }
   };
+  MiniChart.prototype._bindEvents = function () {
+    var self = this;
+    this.canvas.style.cursor = 'crosshair';
+    this.canvas.addEventListener('mousemove', function (e) {
+      var rect = self.canvas.getBoundingClientRect();
+      var mx = e.clientX - rect.left;
+      var html = '';
+      if (self._hitPts && self._hitPts.length) {
+        var pts0 = self._hitPts[0].pts;
+        var best = 0, bestDist = Infinity;
+        pts0.forEach(function (p, i) {
+          var d = Math.abs(p.x - mx);
+          if (d < bestDist) { bestDist = d; best = i; }
+        });
+        if (bestDist < 60) {
+          html = '<div style="font-size:11px;color:#9ca3af;margin-bottom:4px">' + pts0[best].lbl + '</div>';
+          self._hitPts.forEach(function (ds) {
+            var p = ds.pts[best];
+            if (!p) return;
+            html += '<div style="display:flex;align-items:center;gap:6px;justify-content:space-between">' +
+              '<span style="display:flex;align-items:center;gap:5px">' +
+              '<span style="width:8px;height:8px;border-radius:50%;background:' + ds.color + ';display:inline-block;flex-shrink:0"></span>' +
+              (ds.name ? '<span style="color:#d1d5db;font-size:11px">' + ds.name + '</span>' : '') +
+              '</span><b style="padding-left:12px">' + Math.round(p.val) + '</b></div>';
+          });
+        }
+      } else if (self._hitBars && self._hitBars.length) {
+        var hit = null;
+        self._hitBars.forEach(function (b) { if (mx >= b.x && mx <= b.x + b.w) hit = b; });
+        if (hit) {
+          html = '<div style="font-weight:600;margin-bottom:3px">' + hit.lbl + '</div>' +
+            '<div style="color:#d1d5db">검색량 지수: <b style="color:#fff">' + Math.round(hit.val) + '</b></div>';
+        }
+      }
+      if (html) {
+        _tip.innerHTML = html;
+        _tip.style.display = 'block';
+        var tx = e.clientX + 14;
+        if (tx + 180 > window.innerWidth) tx = e.clientX - 194;
+        _tip.style.left = tx + 'px';
+        _tip.style.top = (e.clientY - 12) + 'px';
+      } else {
+        _tip.style.display = 'none';
+      }
+    });
+    this.canvas.addEventListener('mouseleave', function () { _tip.style.display = 'none'; });
+  };
   MiniChart.prototype._line = function (ctx, W, H) {
     var data = this.config.data, opts = this.config.options || {};
     var labels = data.labels, datasets = data.datasets, n = labels.length;
@@ -425,8 +479,14 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
       ctx.fillText(lbl, xOf(i), H - PAD.b + 5);
     });
     var self = this;
+    var hitPts = [];
     datasets.forEach(function (ds) {
       var pts = ds.data.map(function (v, i) { return { x: xOf(i), y: yOf(v) }; });
+      hitPts.push({
+        name: ds.label || '',
+        color: ds.borderColor || '#2563eb',
+        pts: ds.data.map(function (v, i) { return { x: xOf(i), val: v, lbl: labels[i] }; })
+      });
       if (ds.fill && pts.length > 1) {
         ctx.beginPath();
         self._bezier(ctx, pts);
@@ -454,6 +514,8 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
         });
       }
     });
+    this._hitPts = hitPts;
+    this._hitBars = null;
   };
   MiniChart.prototype._bar = function (ctx, W, H) {
     var data = this.config.data, opts = this.config.options || {};
@@ -469,6 +531,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
     var slot = cW / n;
     var barW = Math.min(Math.max(slot * 0.6, 6), 64);
     var r = Math.min(4, barW * 0.2);
+    var hitBars = [];
     ds.data.forEach(function (v, i) {
       var barH = Math.max(0, cH * (v - yMin) / (yMax - yMin));
       var x = PAD.l + slot * i + slot / 2 - barW / 2;
@@ -493,7 +556,10 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
       var maxCh = Math.max(2, Math.floor(slot / 7));
       var display = lbl.length > maxCh ? lbl.slice(0, maxCh - 1) + '…' : lbl;
       ctx.fillText(display, x + barW / 2, H - PAD.b + 6);
+      hitBars.push({ x: x, w: barW, val: v, lbl: lbl });
     });
+    this._hitPts = null;
+    this._hitBars = hitBars;
   };
   window.Chart = function (canvas, config) { return new MiniChart(canvas, config); };
 })();
@@ -632,14 +698,15 @@ function init(){
 
 function buildCityNav(){
   const el=document.getElementById('cityNav');
-  const doName={'수도권':'수도권','강원':'강원도','경상':'경상도','전라':'전라도','충청':'충청도','제주':'제주도'};
+  const doName={'수도권':'수도권','강원':'강원도','제주':'제주도','충청':'충청도','경상':'경상도','전라':'전라도'};
+  const ORDER=['수도권','강원','제주','충청','경상','전라'];
   const grouped={};
   CITIES.forEach(c=>{(grouped[c.region]||(grouped[c.region]=[])).push(c);});
-  el.innerHTML=Object.entries(grouped).map(([r,cs])=>
-    `<div class="nav-section-label" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--border)">${doName[r]||r}</div>`+
-    cs.map(c=>`<div class="nav-item" id="cnav-${c.name}" onclick="selectCity('${c.name}')">${c.name}</div>`
-    ).join('')
-  ).join('');
+  el.innerHTML=ORDER.filter(r=>grouped[r]).map(r=>{
+    const cs=grouped[r];
+    return `<div class="nav-section-label" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--border)">${doName[r]||r}</div>`+
+      cs.map(c=>`<div class="nav-item" id="cnav-${c.name}" onclick="selectCity('${c.name}')">${c.name}</div>`).join('');
+  }).join('');
 }
 
 // ── NAV ───────────────────────────────────────────────────────
@@ -817,6 +884,7 @@ function _drawOverview(p,cdm,chartData){
       <span class="rank-name">${c.name}</span>
       <span class="rank-region">${c.region}</span>
       <div class="rank-bar-bg"><div class="rank-bar" style="width:${Math.round(c.score/maxR*100)}%;background:${COLORS[i%COLORS.length]}"></div></div>
+      <span style="font-size:11px;color:var(--text2);min-width:24px;text-align:right;font-variant-numeric:tabular-nums">${c.score}</span>
       <span class="rank-pct" style="color:var(--green)">+${c.chg}%</span>
     </div>`).join('');
 
@@ -828,6 +896,7 @@ function _drawOverview(p,cdm,chartData){
       <span class="rank-name">${c.name}</span>
       <span class="rank-region">${c.region}</span>
       <div class="rank-bar-bg"><div class="rank-bar" style="width:${Math.round(Math.abs(c.chg)/maxF*100)}%;background:#ef4444"></div></div>
+      <span style="font-size:11px;color:var(--text2);min-width:24px;text-align:right;font-variant-numeric:tabular-nums">${c.score}</span>
       <span class="rank-pct" style="color:var(--red)">${c.chg}%</span>
     </div>`).join('');
 
