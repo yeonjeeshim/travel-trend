@@ -847,7 +847,7 @@ function parseApiResults(apiData){
 async function init(){
   buildCityNav();
   try{
-    const res=await fetch('data/stay-cache.json');
+    const res=await fetch('data/stay-cache.json?t='+Date.now());
     if(res.ok){
       const json=await res.json();
       if(json.data&&Object.keys(json.data).length>0){
