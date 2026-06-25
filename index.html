@@ -323,7 +323,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
         <div class="panel-title">🔥 뜨는 조합 TOP 15</div>
         <div style="overflow-x:auto;">
           <table class="stay-rank-table">
-            <thead><tr><th>#</th><th>지역</th><th>타입</th><th>지수</th><th>변화</th><th>2주 추이</th></tr></thead>
+            <thead><tr><th>#</th><th>지역</th><th>타입</th><th><span title="기간 중 최고 검색 시점을 100으로 한 상대값 (네이버 DataLab 제공)" style="cursor:help;border-bottom:1px dashed var(--text3)">상대 지수</span></th><th>변화</th><th>2주 추이</th></tr></thead>
             <tbody id="stRisingBody"></tbody>
           </table>
         </div>
@@ -332,12 +332,13 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
         <div class="panel-title">📉 지는 조합 TOP 15</div>
         <div style="overflow-x:auto;">
           <table class="stay-rank-table">
-            <thead><tr><th>#</th><th>지역</th><th>타입</th><th>지수</th><th>변화</th><th>2주 추이</th></tr></thead>
+            <thead><tr><th>#</th><th>지역</th><th>타입</th><th><span title="기간 중 최고 검색 시점을 100으로 한 상대값 (네이버 DataLab 제공)" style="cursor:help;border-bottom:1px dashed var(--text3)">상대 지수</span></th><th>변화</th><th>2주 추이</th></tr></thead>
             <tbody id="stFallingBody"></tbody>
           </table>
         </div>
       </div>
     </div>
+    <div style="font-size:11px;color:var(--text3);margin-top:4px;padding:0 2px;">* 상대 검색 지수: 기간 중 가장 많이 검색된 시점을 100으로 한 상대값입니다. 네이버 DataLab 기준이며 실제 검색 건수가 아닙니다.</div>
   </div>
 
   <!-- PAGE: 도시 분석 -->
@@ -362,7 +363,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
       </div>
 
       <div class="g4 mb14">
-        <div class="metric"><div class="metric-val ac" id="cy-idx">—</div><div class="metric-lbl">검색량 지수</div></div>
+        <div class="metric"><div class="metric-val ac" id="cy-idx">—</div><div class="metric-lbl">상대 검색 지수</div></div>
         <div class="metric"><div class="metric-val" id="cy-chg">—</div><div class="metric-lbl">전기간 대비</div></div>
         <div class="metric"><div class="metric-val" id="cy-peak" style="color:var(--amber)">—</div><div class="metric-lbl">피크 시점</div></div>
         <div class="metric"><div class="metric-val ac" id="cy-kwcnt">—</div><div class="metric-lbl">연관 키워드</div></div>
@@ -422,7 +423,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
       </div>
 
       <div class="kw-stat-grid mb14">
-        <div class="metric"><div class="metric-val ac" id="kw-cur">—</div><div class="metric-lbl">현재 지수</div></div>
+        <div class="metric"><div class="metric-val ac" id="kw-cur">—</div><div class="metric-lbl">상대 검색 지수</div></div>
         <div class="metric"><div class="metric-val" id="kw-chg">—</div><div class="metric-lbl">전기간 대비</div></div>
         <div class="metric"><div class="metric-val" style="color:var(--amber)" id="kw-trend">—</div><div class="metric-lbl">트렌드 방향</div></div>
       </div>
@@ -586,7 +587,7 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
         self._hitBars.forEach(function (b) { if (mx >= b.x && mx <= b.x + b.w) hit = b; });
         if (hit) {
           html = '<div style="font-weight:600;margin-bottom:3px">' + hit.lbl + '</div>' +
-            '<div style="color:#d1d5db">검색량 지수: <b style="color:#fff">' + Math.round(hit.val) + '</b></div>';
+            '<div style="color:#d1d5db">상대 검색 지수: <b style="color:#fff">' + Math.round(hit.val) + '</b></div>';
         }
       }
       if (html) {
