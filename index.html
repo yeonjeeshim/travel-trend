@@ -1585,7 +1585,7 @@ async function loadRanking() {
         ages: S.rkAge ? [S.rkAge] : [],
         page, count: 20
       };
-      const res = await fetch('https://openapi.naver.com/v1/datalab/shopping/category/keywords', {
+      const res = await fetch(CORS_PROXY + encodeURIComponent('https://openapi.naver.com/v1/datalab/shopping/category/keywords'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
