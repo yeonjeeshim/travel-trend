@@ -378,6 +378,11 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
       </div>
 
       <div class="panel mb14">
+        <div class="panel-title">🏨 이 도시 숙소 타입별 검색량 <span class="hl" id="cy-stay-lbl">2주</span></div>
+        <div class="chart-wrap" style="height:200px;"><canvas id="cyStayChart"></canvas></div>
+      </div>
+
+      <div class="panel mb14">
         <div class="panel-title">키워드별 검색량 — <span class="hl" id="cy-kw-period">2주</span></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;" id="cy-tags"></div>
         <div class="chart-wrap" style="height:220px;"><canvas id="cityBarChart"></canvas></div>
@@ -1305,6 +1310,8 @@ function _drawCity(name,p,overall,kwData){
   if(p==='2w'&&overall)renderSpark('cy-spark-row',overall.vals,overall.labels);
   else demoSpark('cy-spark-row',name+'city',p);
   document.getElementById('cy-spark-panel').style.display=p==='2w'?'block':'none';
+  document.getElementById('cy-stay-lbl').textContent=plabel(p);
+  mkBar('cyStayChart',STAY_TYPES,STAY_TYPES.map(t=>sr(seed(name+t+p+'st'),15,95)),STAY_TYPES.map(t=>TC[t]),{h:'200px'});
   document.getElementById('cy-tags').innerHTML=city.keywords.map(k=>
     `<span class="city-tag" onclick="searchKeyword('${name} ${k}')">${k}</span>`).join('');
   const kwNames=kwData&&Object.keys(kwData).length?city.keywords.slice(0,4):city.keywords;
