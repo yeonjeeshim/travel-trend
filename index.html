@@ -456,112 +456,17 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
   <!-- PAGE: 숙박 인기검색어 -->
   <div class="page" id="page-ranking">
     <div class="page-title">숙박 인기검색어</div>
-    <div class="page-sub">네이버 쇼핑인사이트 — 국내숙박 카테고리 인기 검색어 TOP 500</div>
-
-    <!-- 필터 -->
-    <div class="panel mb14">
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:start;">
-        <div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">기간</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;">
-            <button class="ptab on" onclick="rkPeriod(this,'1w')" id="rk-p-1w">1주</button>
-            <button class="ptab" onclick="rkPeriod(this,'1m')" id="rk-p-1m">1개월</button>
-            <button class="ptab" onclick="rkPeriod(this,'3m')" id="rk-p-3m">3개월</button>
-          </div>
-        </div>
-        <div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">기기</div>
-          <div style="display:flex;gap:4px;">
-            <button class="ptab on" onclick="rkFilter('device',this,'')">전체</button>
-            <button class="ptab" onclick="rkFilter('device',this,'pc')">PC</button>
-            <button class="ptab" onclick="rkFilter('device',this,'mo')">모바일</button>
-          </div>
-        </div>
-        <div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">성별</div>
-          <div style="display:flex;gap:4px;">
-            <button class="ptab on" onclick="rkFilter('gender',this,'')">전체</button>
-            <button class="ptab" onclick="rkFilter('gender',this,'f')">여성</button>
-            <button class="ptab" onclick="rkFilter('gender',this,'m')">남성</button>
-          </div>
-        </div>
-        <div>
-          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">연령</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;">
-            <button class="ptab on" onclick="rkFilter('age',this,'')">전체</button>
-            <button class="ptab" onclick="rkFilter('age',this,'10')">10대</button>
-            <button class="ptab" onclick="rkFilter('age',this,'20')">20대</button>
-            <button class="ptab" onclick="rkFilter('age',this,'30')">30대</button>
-            <button class="ptab" onclick="rkFilter('age',this,'40')">40대</button>
-            <button class="ptab" onclick="rkFilter('age',this,'50')">50대</button>
-            <button class="ptab" onclick="rkFilter('age',this,'60')">60대+</button>
-          </div>
-        </div>
+    <div class="page-sub">네이버 쇼핑인사이트에서 국내숙박 카테고리 인기 검색어를 확인하세요</div>
+    <div class="empty-state">
+      <div class="empty-icon">🏆</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:8px;">네이버 쇼핑인사이트에서 확인하세요</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.7;">
+        국내숙박 카테고리 인기 검색어 순위는<br>네이버 쇼핑인사이트에서 직접 조회할 수 있어요.
       </div>
-      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;">
-        <a href="https://datalab.naver.com/shoppingInsight/sCategory.naver" target="_blank" rel="noopener" style="background:var(--accent);color:#fff;border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-flex;align-items:center;gap:6px;">🔍 네이버 쇼핑인사이트 열기 ↗</a>
-        <button onclick="loadRankingDemo()" style="background:var(--surface2);color:var(--text2);border:1px solid var(--border);padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;">데모 미리보기</button>
-        <div id="rk-status" style="font-size:12px;color:var(--text3);">필터 선택 후 네이버 쇼핑인사이트에서 국내숙박 인기검색어를 확인하세요</div>
-      </div>
-    </div>
-
-    <!-- 상단 지표 -->
-    <div class="g4 mb14" id="rk-metrics" style="display:none">
-      <div class="metric"><div class="metric-val ac" id="rk-total">—</div><div class="metric-lbl">조회 키워드 수</div></div>
-      <div class="metric"><div class="metric-val up" id="rk-top1">—</div><div class="metric-lbl">1위 키워드</div></div>
-      <div class="metric"><div class="metric-val" id="rk-period-lbl" style="color:var(--amber)">—</div><div class="metric-lbl">조회 기간</div></div>
-      <div class="metric"><div class="metric-val ac" id="rk-page-info">—</div><div class="metric-lbl">페이지</div></div>
-    </div>
-
-    <div class="g2 mb14" id="rk-charts" style="display:none">
-      <div class="panel">
-        <div class="panel-title">TOP 20 키워드 검색량 비교</div>
-        <div class="chart-wrap" style="height:280px;"><canvas id="rkBarChart"></canvas></div>
-      </div>
-      <div class="panel">
-        <div class="panel-title">클릭량 추이</div>
-        <div class="chart-wrap" style="height:280px;"><canvas id="rkLineChart"></canvas></div>
-      </div>
-    </div>
-
-    <!-- 키워드 랭킹 테이블 -->
-    <div class="panel mb14">
-      <div class="panel-title" style="display:flex;align-items:center;justify-content:space-between;">
-        <span>🏆 인기 검색어 랭킹 <span id="rk-count-label" style="color:var(--accent)"></span></span>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <input id="rk-search-filter" type="text" placeholder="키워드 필터..." style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-family:inherit;" oninput="filterRkTable()"/>
-          <div style="display:flex;gap:4px;">
-            <button onclick="rkPage(-1)" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;font-size:12px;">◀</button>
-            <span id="rk-page-display" style="font-size:12px;color:var(--text2);padding:4px 8px;"></span>
-            <button onclick="rkPage(1)" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;font-size:12px;">▶</button>
-          </div>
-        </div>
-      </div>
-      <div id="rk-loading" style="text-align:center;padding:40px;color:var(--text3);display:none;">
-        <div style="font-size:24px;margin-bottom:8px;">⏳</div>
-        <div>데이터 불러오는 중...</div>
-      </div>
-      <div id="rk-empty" style="text-align:center;padding:40px;color:var(--text3);">
-        <div style="font-size:32px;margin-bottom:8px;">🏆</div>
-        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">조회하기를 눌러 인기 검색어를 확인하세요</div>
-        <div style="font-size:12px;">API 키 없이도 데모 데이터로 미리 볼 수 있어요</div>
-        <button onclick="loadRankingDemo()" style="margin-top:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:7px 16px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;">데모로 미리보기</button>
-      </div>
-      <div id="rk-table-wrap" style="display:none;overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;" id="rkTable">
-          <thead>
-            <tr style="border-bottom:1px solid var(--border);">
-              <th style="font-size:11px;color:var(--text3);padding:8px 10px;text-align:left;width:50px;">#</th>
-              <th style="font-size:11px;color:var(--text3);padding:8px 10px;text-align:left;">키워드</th>
-              <th style="font-size:11px;color:var(--text3);padding:8px 10px;text-align:right;width:80px;">검색량</th>
-              <th style="font-size:11px;color:var(--text3);padding:8px 10px;text-align:center;width:80px;">순위변동</th>
-              <th style="font-size:11px;color:var(--text3);padding:8px 10px;text-align:center;width:100px;">트렌드</th>
-              <th style="font-size:11px;color:var(--text3);padding:8px 10px;text-align:center;width:80px;">분석</th>
-            </tr>
-          </thead>
-          <tbody id="rkTableBody"></tbody>
-        </table>
-      </div>
+      <a href="https://datalab.naver.com/shoppingInsight/sCategory.naver" target="_blank" rel="noopener"
+        style="background:var(--accent);color:#fff;padding:12px 28px;border-radius:10px;font-size:14px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:8px;">
+        🔍 네이버 쇼핑인사이트 열기 ↗
+      </a>
     </div>
   </div>
 
