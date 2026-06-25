@@ -1574,12 +1574,14 @@ async function loadRanking() {
   const { startDate, endDate } = getRkDates(S.rkPeriod);
 
   try {
+    const RK_KEYWORDS = ['펜션','호텔','리조트','풀빌라','게스트하우스','모텔','글램핑','풀빌라','한옥숙박','캠핑'];
     const body = {
       startDate, endDate,
       timeUnit: S.rkPeriod === '1w' ? 'date' : 'week',
       category: RK_CATEGORY,
-      device: S.rkDevice,
-      gender: S.rkGender,
+      keyword: RK_KEYWORDS.map(k => ({name: k, param: [k]})),
+      ...(S.rkDevice && {device: S.rkDevice}),
+      ...(S.rkGender && {gender: S.rkGender}),
       ages: S.rkAge ? [S.rkAge] : []
     };
     const res = await fetch(CORS_PROXY + encodeURIComponent('https://openapi.naver.com/v1/datalab/shopping/category/keywords'), {
@@ -1591,15 +1593,18 @@ async function loadRanking() {
       },
       body: JSON.stringify(body)
     });
-    if (!res.ok) throw new Error('API ' + res.status);
+    if (!res.ok) {
+      let msg = 'API ' + res.status;
+      try { const e = await res.json(); msg += ': ' + (e.errorMessage || e.message || JSON.stringify(e)); } catch {}
+      throw new Error(msg);
+    }
     const data = await res.json();
-    const keywords = data.results?.[0]?.data || data.data || [];
-    const allData = keywords.map((k, i) => ({
-      rank: i + 1,
-      keyword: k.keyword || k.title || k.period || JSON.stringify(k),
-      ratio: Math.round(k.ratio || 0),
-      prevRank: null
-    }));
+    const results = data.results || [];
+    const allData = results.map((r, i) => {
+      const vals = r.data || [];
+      const avg = vals.length ? Math.round(vals.reduce((s,d)=>s+d.ratio,0)/vals.length) : 0;
+      return { rank: i + 1, keyword: r.title, ratio: avg, prevRank: null };
+    }).sort((a,b) => b.ratio - a.ratio).map((r,i) => ({...r, rank: i+1}));
     S.rkData = allData;
     S.rkFiltered = [...allData];
     S.rkPage = 1;
