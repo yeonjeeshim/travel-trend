@@ -632,11 +632,12 @@ function init(){
 
 function buildCityNav(){
   const el=document.getElementById('cityNav');
+  const doName={'수도권':'수도권','강원':'강원도','경상':'경상도','전라':'전라도','충청':'충청도','제주':'제주도'};
   const grouped={};
   CITIES.forEach(c=>{(grouped[c.region]||(grouped[c.region]=[])).push(c);});
   el.innerHTML=Object.entries(grouped).map(([r,cs])=>
-    cs.map(c=>`<div class="nav-item" id="cnav-${c.name}" onclick="selectCity('${c.name}')">
-      <span style="font-size:11px;color:var(--text3);width:18px;text-align:center">${r[0]}</span> ${c.name}</div>`
+    `<div class="nav-section-label" style="margin-top:6px;padding-top:8px;border-top:1px solid var(--border)">${doName[r]||r}</div>`+
+    cs.map(c=>`<div class="nav-item" id="cnav-${c.name}" onclick="selectCity('${c.name}')">${c.name}</div>`
     ).join('')
   ).join('');
 }
