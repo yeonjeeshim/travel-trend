@@ -750,6 +750,7 @@ const S={
   ovPeriod:'2w',selCity:null,cyPeriod:'2w',selKw:null,kwPeriod:'2w',
   stP:'2w',stT:'all',
   rkPeriod:'1w',rkDevice:'',rkGender:'',rkAge:'',rkPage:1,rkData:[],rkFiltered:[],rkLoaded:false,
+  stayCache:null,stayCacheDate:null,
   charts:{},cache:{},_toastTimer:null
 };
 
@@ -843,8 +844,18 @@ function parseApiResults(apiData){
 }
 
 // ── INIT ──────────────────────────────────────────────────────
-function init(){
+async function init(){
   buildCityNav();
+  try{
+    const res=await fetch('data/stay-cache.json');
+    if(res.ok){
+      const json=await res.json();
+      if(json.data&&Object.keys(json.data).length>0){
+        S.stayCache=json.data;
+        S.stayCacheDate=json.updatedAt;
+      }
+    }
+  }catch(e){}
   const savedId=localStorage.getItem('naver_api_id');
   const savedSecret=localStorage.getItem('naver_api_secret');
   if(savedId&&savedSecret){
@@ -1007,7 +1018,11 @@ function miniSpark(key){
 function getCombos(p){
   return CITIES.flatMap(city=>STAY_TYPES.map(type=>{
     const key=city.name+type+p;
-    return{city:city.name,region:city.region,type,score:sr(seed(key+'sc'),15,95),chg:sr(seed(key+'ch'),-30,40),key};
+    const cacheKey=`${city.name}_${type}`;
+    const cached=S.stayCache&&S.stayCache[cacheKey];
+    return{city:city.name,region:city.region,type,
+      score:cached?cached.score:sr(seed(key+'sc'),15,95),
+      chg:cached?cached.chg:sr(seed(key+'ch'),-30,40),key};
   }));
 }
 function stPeriod(btn,p){
@@ -1020,6 +1035,16 @@ function stType(btn,type){
 }
 function renderStay(p,tf){
   document.getElementById('st-period-label').textContent=plabel(p);
+  const stBar=document.querySelector('#page-stay .demo-bar');
+  if(stBar){
+    if(S.stayCache){
+      stBar.textContent=`✅ 실제 데이터 (${S.stayCacheDate} 기준) — 매일 오전 6시 자동 업데이트`;
+      stBar.style.cssText='background:var(--green-bg);border:1px solid #bbf7d0;border-radius:8px;padding:8px 14px;font-size:12px;color:var(--green);display:flex;align-items:center;gap:8px;margin-bottom:16px;';
+    } else {
+      stBar.textContent='⚡ 추정 참고 데이터 — 실제 데이터는 매일 오전 6시 GitHub Actions로 자동 업데이트됩니다';
+      stBar.style.cssText='background:var(--amber-bg);border:1px solid #fde68a;border-radius:8px;padding:8px 14px;font-size:12px;color:var(--amber);display:flex;align-items:center;gap:8px;margin-bottom:16px;';
+    }
+  }
   let combos=getCombos(p);
   if(tf!=='all')combos=combos.filter(c=>c.type===tf);
   const rising=[...combos].sort((a,b)=>b.chg-a.chg).slice(0,15);
