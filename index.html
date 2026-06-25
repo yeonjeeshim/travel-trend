@@ -1,0 +1,1068 @@
+<title>여행 트렌드 분석</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#f7f8fa;
+  --surface:#ffffff;
+  --surface2:#f0f2f6;
+  --border:#e4e7ed;
+  --border2:#d0d4de;
+  --accent:#2563eb;
+  --accent-light:#eff4ff;
+  --green:#16a34a;
+  --green-bg:#f0fdf4;
+  --red:#dc2626;
+  --red-bg:#fef2f2;
+  --amber:#d97706;
+  --amber-bg:#fffbeb;
+  --text:#111827;
+  --text2:#6b7280;
+  --text3:#9ca3af;
+  --sidebar-w:220px;
+  --topbar-h:56px;
+}
+body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sans-serif;background:var(--bg);color:var(--text);font-size:14px;min-height:100vh;}
+
+.app{display:grid;grid-template-columns:var(--sidebar-w) 1fr;grid-template-rows:var(--topbar-h) 1fr;min-height:100vh;}
+.topbar{grid-column:1/-1;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:16px;position:sticky;top:0;z-index:100;}
+.sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;position:sticky;top:var(--topbar-h);height:calc(100vh - var(--topbar-h));}
+.main{overflow-y:auto;min-height:calc(100vh - var(--topbar-h));}
+
+.logo{font-size:15px;font-weight:700;color:var(--text);white-space:nowrap;}
+.logo span{color:var(--accent);}
+.search-wrap{flex:1;max-width:440px;position:relative;}
+.search-input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 80px 8px 14px;border-radius:8px;font-size:13px;font-family:inherit;}
+.search-input:focus{outline:none;border-color:var(--accent);background:#fff;}
+.search-btn{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:var(--accent);color:#fff;border:none;padding:5px 12px;border-radius:5px;font-size:12px;cursor:pointer;font-weight:500;}
+.search-btn:hover{background:#1d4ed8;}
+.api-wrap{display:flex;align-items:center;gap:6px;margin-left:auto;}
+.api-input{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:6px;font-size:11px;font-family:monospace;width:130px;}
+.api-input:focus{outline:none;border-color:var(--accent);}
+.api-save-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:6px 10px;border-radius:6px;font-size:11px;cursor:pointer;white-space:nowrap;}
+.api-save-btn:hover{border-color:var(--accent);color:var(--accent);}
+.api-dot{width:7px;height:7px;border-radius:50%;background:var(--border2);}
+.api-dot.live{background:var(--green);}
+
+.sidebar-nav{padding:12px 0;flex:1;overflow-y:auto;}
+.nav-section-label{padding:10px 16px 5px;font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;}
+.nav-item{padding:8px 16px;cursor:pointer;display:flex;align-items:center;gap:9px;font-size:13px;color:var(--text2);border-left:2px solid transparent;transition:all .12s;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:var(--accent-light);color:var(--accent);border-left-color:var(--accent);font-weight:500;}
+.nav-icon{font-size:15px;width:18px;text-align:center;}
+
+.period-row{display:flex;gap:5px;margin-bottom:16px;}
+.ptab{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-family:inherit;}
+.ptab.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:500;}
+
+.page{display:none;padding:24px;}
+.page.active{display:block;}
+.page-title{font-size:18px;font-weight:700;margin-bottom:4px;}
+.page-sub{font-size:13px;color:var(--text2);margin-bottom:20px;}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 20px;}
+.panel-title{font-size:12px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.panel-title .hl{color:var(--accent);}
+
+.metric-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.metric-val{font-size:22px;font-weight:700;color:var(--text);}
+.metric-lbl{font-size:11px;color:var(--text2);margin-top:3px;}
+.metric-val.up{color:var(--green);}
+.metric-val.dn{color:var(--red);}
+.metric-val.ac{color:var(--accent);}
+
+.rank-list{display:flex;flex-direction:column;gap:7px;}
+.rank-row{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 6px;border-radius:6px;transition:background .1s;}
+.rank-row:hover{background:var(--surface2);}
+.rank-num{font-size:11px;color:var(--text3);width:14px;text-align:right;flex-shrink:0;}
+.rank-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.rank-name{font-size:13px;color:var(--text);flex:1;}
+.rank-region{font-size:11px;color:var(--text3);flex-shrink:0;}
+.rank-bar-bg{height:4px;background:var(--surface2);border-radius:2px;flex:2;min-width:30px;overflow:hidden;}
+.rank-bar{height:100%;border-radius:2px;transition:width .5s ease;}
+.rank-pct{font-size:12px;font-weight:500;width:40px;text-align:right;flex-shrink:0;}
+
+.kw-list{display:flex;flex-direction:column;gap:3px;}
+.kw-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:6px;cursor:pointer;transition:background .1s;}
+.kw-row:hover{background:var(--surface2);}
+.kw-rank{font-size:11px;color:var(--text3);width:14px;text-align:right;flex-shrink:0;}
+.kw-name{font-size:13px;color:var(--text);flex:1;}
+.kw-city{font-size:11px;color:var(--text3);}
+.badge{font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;flex-shrink:0;}
+.badge.up{background:var(--green-bg);color:var(--green);}
+.badge.dn{background:var(--red-bg);color:var(--red);}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px;}
+.full{grid-column:1/-1;}
+.mb14{margin-bottom:14px;}
+
+.chart-wrap{position:relative;width:100%;}
+.legend-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);}
+.legend-sq{width:10px;height:3px;border-radius:2px;}
+
+.city-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;}
+.city-tag{background:var(--accent-light);border:1px solid #bfdbfe;color:var(--accent);padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;transition:all .12s;}
+.city-tag:hover{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+.kw-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.related-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.related-card{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;cursor:pointer;transition:all .12s;}
+.related-card:hover{border-color:var(--accent);background:#fff;}
+.related-card .rc-name{font-size:13px;font-weight:500;margin-bottom:3px;}
+.related-card .rc-score{font-size:12px;color:var(--text2);}
+.related-card .rc-badge{font-size:10px;padding:2px 6px;border-radius:10px;background:var(--surface);color:var(--text2);margin-top:5px;width:fit-content;}
+.related-card .rc-badge.hi{background:var(--green-bg);color:var(--green);}
+
+.demo-bar{background:var(--amber-bg);border:1px solid #fde68a;border-radius:8px;padding:8px 14px;font-size:12px;color:var(--amber);display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+
+.empty-state{text-align:center;padding:60px 20px;color:var(--text2);}
+.empty-icon{font-size:36px;margin-bottom:12px;}
+
+.spark-wrap{display:flex;align-items:flex-end;gap:2px;height:32px;}
+.spark-bar{flex:1;border-radius:2px 2px 0 0;min-height:3px;transition:opacity .1s;}
+.spark-bar:hover{opacity:.7;}
+
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">여행 <span>트렌드</span></div>
+  <div class="search-wrap">
+    <input class="search-input" id="globalSearch" placeholder="키워드 검색 (예: 여수 밤바다, 경포대 ...)" />
+    <button class="search-btn" onclick="doGlobalSearch()">검색</button>
+  </div>
+  <div class="api-wrap">
+    <input class="api-input" id="apiId" type="text" placeholder="Client ID" />
+    <input class="api-input" id="apiSecret" type="password" placeholder="Secret" />
+    <button class="api-save-btn" onclick="saveApi()">저장</button>
+    <div class="api-dot" id="apiDot" title="데모 모드"></div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-nav">
+    <div class="nav-section-label">분석 화면</div>
+    <div class="nav-item active" onclick="goPage('overview')" id="nav-overview">
+      <span class="nav-icon">🗺</span> 전체 현황
+    </div>
+    <div class="nav-item" onclick="goPage('city')" id="nav-city">
+      <span class="nav-icon">🏙</span> 도시 분석
+    </div>
+    <div class="nav-item" onclick="goPage('keyword')" id="nav-keyword">
+      <span class="nav-icon">🔍</span> 키워드 검색
+    </div>
+    <div class="nav-section-label" style="margin-top:8px;">도시 바로가기</div>
+    <div id="cityNav"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- PAGE: 전체 현황 -->
+  <div class="page active" id="page-overview">
+    <div class="page-title">전체 현황</div>
+    <div class="page-sub">전국 20개 주요 여행 도시의 검색 트렌드를 한눈에</div>
+
+    <div class="period-row">
+      <button class="ptab on" onclick="ovPeriod(this,'2w')">2주</button>
+      <button class="ptab" onclick="ovPeriod(this,'1m')">1개월</button>
+      <button class="ptab" onclick="ovPeriod(this,'3m')">3개월</button>
+      <button class="ptab" onclick="ovPeriod(this,'1y')">1년</button>
+    </div>
+
+    <div class="demo-bar" id="ovDemo">⚡ 데모 데이터로 표시 중 — 우상단에 네이버 API 키 입력 후 저장 시 실제 데이터로 전환됩니다</div>
+
+    <div class="metric-grid">
+      <div class="metric"><div class="metric-val ac">20</div><div class="metric-lbl">분석 도시</div></div>
+      <div class="metric"><div class="metric-val ac" id="ov-top">—</div><div class="metric-lbl">기간 내 1위</div></div>
+      <div class="metric"><div class="metric-val up" id="ov-up">—</div><div class="metric-lbl">상승 지역</div></div>
+      <div class="metric"><div class="metric-val dn" id="ov-dn">—</div><div class="metric-lbl">하락 지역</div></div>
+      <div class="metric"><div class="metric-val" id="ov-flat" style="color:var(--text2)">—</div><div class="metric-lbl">보합 지역</div></div>
+    </div>
+
+    <div class="g2">
+      <div class="panel">
+        <div class="panel-title">🔥 뜨는 지역 TOP 10</div>
+        <div class="rank-list" id="ov-rising"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">📉 지는 지역 TOP 10</div>
+        <div class="rank-list" id="ov-falling"></div>
+      </div>
+    </div>
+
+    <div class="g2 mb14">
+      <div class="panel">
+        <div class="panel-title">↑ 키워드 상승 TOP 10</div>
+        <div class="kw-list" id="ov-kwup"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">↓ 키워드 하락 TOP 10</div>
+        <div class="kw-list" id="ov-kwdn"></div>
+      </div>
+    </div>
+
+    <div class="panel mb14">
+      <div class="panel-title">뜨는 지역 TOP 5 — 검색량 추이</div>
+      <div class="chart-wrap"><canvas id="ovChart" role="img" aria-label="뜨는 지역 TOP5 검색량 추이"></canvas></div>
+      <div class="legend-row" id="ovLegend"></div>
+    </div>
+  </div>
+
+  <!-- PAGE: 도시 분석 -->
+  <div class="page" id="page-city">
+    <div class="page-title" id="city-title">도시 분석</div>
+    <div class="page-sub">도시별 여행 키워드 검색량 및 트렌드</div>
+
+    <div class="empty-state" id="city-empty">
+      <div class="empty-icon">🏙</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:6px;">도시를 선택하세요</div>
+      <div style="font-size:13px;">좌측 사이드바에서 도시를 선택하거나<br>전체 현황에서 지역 이름을 클릭하세요</div>
+    </div>
+
+    <div id="city-content" style="display:none">
+      <div class="demo-bar" id="cyDemo">⚡ 데모 데이터로 표시 중</div>
+
+      <div class="period-row">
+        <button class="ptab on" onclick="cityPeriod(this,'2w')">2주</button>
+        <button class="ptab" onclick="cityPeriod(this,'1m')">1개월</button>
+        <button class="ptab" onclick="cityPeriod(this,'3m')">3개월</button>
+        <button class="ptab" onclick="cityPeriod(this,'1y')">1년</button>
+      </div>
+
+      <div class="g4 mb14">
+        <div class="metric"><div class="metric-val ac" id="cy-idx">—</div><div class="metric-lbl">검색량 지수</div></div>
+        <div class="metric"><div class="metric-val" id="cy-chg">—</div><div class="metric-lbl">전기간 대비</div></div>
+        <div class="metric"><div class="metric-val" id="cy-peak" style="color:var(--amber)">—</div><div class="metric-lbl">피크 시점</div></div>
+        <div class="metric"><div class="metric-val ac" id="cy-kwcnt">—</div><div class="metric-lbl">연관 키워드</div></div>
+      </div>
+
+      <div class="panel mb14" id="cy-spark-panel">
+        <div class="panel-title">최근 2주 일별 검색량</div>
+        <div id="cy-spark-row" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;"></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:8px;">날짜별 상대 지수 (100 = 기간 최고치)</div>
+      </div>
+
+      <div class="panel mb14">
+        <div class="panel-title">키워드별 검색량 — <span class="hl" id="cy-kw-period">2주</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;" id="cy-tags"></div>
+        <div class="chart-wrap" style="height:220px;"><canvas id="cityBarChart"></canvas></div>
+      </div>
+
+      <div class="g2 mb14">
+        <div class="panel">
+          <div class="panel-title">기간별 검색 트렌드</div>
+          <div class="chart-wrap" style="height:160px;"><canvas id="cityLineChart"></canvas></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">연관 키워드</div>
+          <div class="kw-list" id="cy-related"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: 키워드 검색 -->
+  <div class="page" id="page-keyword">
+    <div class="page-title">키워드 검색</div>
+    <div class="page-sub">특정 키워드의 트렌드·연관어·상위 검색량 키워드 분석</div>
+
+    <div class="empty-state" id="kw-empty">
+      <div class="empty-icon">🔍</div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:6px;">검색어를 입력하세요</div>
+      <div style="font-size:13px;">상단 검색창에 키워드를 입력하거나<br>전체 현황·도시 분석에서 키워드를 클릭하세요</div>
+    </div>
+
+    <div id="kw-content" style="display:none">
+      <div class="demo-bar" id="kwDemo">⚡ 데모 데이터로 표시 중</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:4px;" id="kw-title-text">—</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px;">키워드 트렌드 분석</div>
+
+      <div class="period-row">
+        <button class="ptab on" onclick="kwPeriod(this,'2w')">2주</button>
+        <button class="ptab" onclick="kwPeriod(this,'1m')">1개월</button>
+        <button class="ptab" onclick="kwPeriod(this,'3m')">3개월</button>
+        <button class="ptab" onclick="kwPeriod(this,'1y')">1년</button>
+      </div>
+
+      <div class="kw-stat-grid mb14">
+        <div class="metric"><div class="metric-val ac" id="kw-cur">—</div><div class="metric-lbl">현재 지수</div></div>
+        <div class="metric"><div class="metric-val" id="kw-chg">—</div><div class="metric-lbl">전기간 대비</div></div>
+        <div class="metric"><div class="metric-val" style="color:var(--amber)" id="kw-trend">—</div><div class="metric-lbl">트렌드 방향</div></div>
+      </div>
+
+      <div class="panel mb14" id="kw-spark-panel">
+        <div class="panel-title">최근 2주 일별 검색량</div>
+        <div id="kw-spark-row" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;"></div>
+      </div>
+
+      <div class="panel mb14">
+        <div class="panel-title">검색량 트렌드</div>
+        <div class="chart-wrap" style="height:200px;"><canvas id="kwLineChart"></canvas></div>
+      </div>
+
+      <div class="g2 mb14">
+        <div class="panel">
+          <div class="panel-title">↑ 연관 키워드 — 검색량 높은 순</div>
+          <div class="kw-list" id="kw-related-list"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">🔥 상위 연관키워드 (지수 60+)</div>
+          <div class="kw-list" id="kw-top-related"></div>
+        </div>
+      </div>
+
+      <div class="panel mb14">
+        <div class="panel-title">연관 키워드 비교</div>
+        <div class="chart-wrap" style="height:200px;"><canvas id="kwBarChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(255,255,255,.8);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:12px;">
+  <div style="width:36px;height:36px;border:3px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;"></div>
+  <div id="loadingMsg" style="font-size:13px;color:var(--text2);">데이터 불러오는 중...</div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:8px;font-size:13px;z-index:9999;max-width:420px;text-align:center;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.15);"></div>
+
+<script>
+// ── MINI CHART (인라인 Chart.js 대체) ─────────────────────────
+(function () {
+  'use strict';
+  function MiniChart(canvas, config) {
+    this.canvas = canvas;
+    this.config = config;
+    this._ro = new ResizeObserver(function () { this._render(); }.bind(this));
+    this._ro.observe(canvas.parentElement);
+    this._render();
+  }
+  MiniChart.prototype.destroy = function () {
+    this._ro.disconnect();
+    var ctx = this.canvas.getContext('2d');
+    var dpr = window.devicePixelRatio || 1;
+    ctx.clearRect(0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
+  };
+  MiniChart.prototype._setup = function () {
+    var parent = this.canvas.parentElement;
+    var W = parent.clientWidth || 600;
+    var sh = parent.style.height;
+    var H = sh ? parseInt(sh) : (parent.clientHeight || 200);
+    var dpr = window.devicePixelRatio || 1;
+    this.canvas.width = W * dpr;
+    this.canvas.height = H * dpr;
+    this.canvas.style.width = W + 'px';
+    this.canvas.style.height = H + 'px';
+    var ctx = this.canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    return { ctx: ctx, W: W, H: H };
+  };
+  MiniChart.prototype._render = function () {
+    var s = this._setup();
+    if (this.config.type === 'line') this._line(s.ctx, s.W, s.H);
+    else if (this.config.type === 'bar') this._bar(s.ctx, s.W, s.H);
+  };
+  MiniChart.prototype._grid = function (ctx, PAD, cW, cH, yMin, yMax, H) {
+    [0, 25, 50, 75, 100].filter(function (v) { return v >= yMin && v <= yMax; }).forEach(function (v) {
+      var y = PAD.t + cH * (1 - (v - yMin) / (yMax - yMin));
+      ctx.strokeStyle = 'rgba(0,0,0,.06)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(PAD.l, y);
+      ctx.lineTo(PAD.l + cW, y);
+      ctx.stroke();
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(v, PAD.l - 5, y);
+    });
+  };
+  MiniChart.prototype._bezier = function (ctx, pts) {
+    ctx.moveTo(pts[0].x, pts[0].y);
+    for (var i = 0; i < pts.length - 1; i++) {
+      var dx = pts[i + 1].x - pts[i].x;
+      var t = 0.38;
+      ctx.bezierCurveTo(
+        pts[i].x + dx * t, pts[i].y,
+        pts[i + 1].x - dx * t, pts[i + 1].y,
+        pts[i + 1].x, pts[i + 1].y
+      );
+    }
+  };
+  MiniChart.prototype._line = function (ctx, W, H) {
+    var data = this.config.data, opts = this.config.options || {};
+    var labels = data.labels, datasets = data.datasets, n = labels.length;
+    if (!n || !datasets.length) return;
+    var sc = opts.scales || {};
+    var yMin = (sc.y && sc.y.min != null) ? sc.y.min : 0;
+    var yMax = (sc.y && sc.y.max != null) ? sc.y.max : 100;
+    var PAD = { t: 14, r: 14, b: 36, l: 38 };
+    var cW = W - PAD.l - PAD.r, cH = H - PAD.t - PAD.b;
+    this._grid(ctx, PAD, cW, cH, yMin, yMax, H);
+    var xOf = function (i) { return PAD.l + (n > 1 ? i / (n - 1) : 0.5) * cW; };
+    var yOf = function (v) { return PAD.t + cH * (1 - (v - yMin) / (yMax - yMin)); };
+    var step = n > 14 ? Math.ceil(n / 10) : (n > 8 ? 2 : 1);
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    labels.forEach(function (lbl, i) {
+      if (i % step !== 0 && i !== n - 1) return;
+      ctx.fillText(lbl, xOf(i), H - PAD.b + 5);
+    });
+    var self = this;
+    datasets.forEach(function (ds) {
+      var pts = ds.data.map(function (v, i) { return { x: xOf(i), y: yOf(v) }; });
+      if (ds.fill && pts.length > 1) {
+        ctx.beginPath();
+        self._bezier(ctx, pts);
+        ctx.lineTo(pts[pts.length - 1].x, PAD.t + cH);
+        ctx.lineTo(pts[0].x, PAD.t + cH);
+        ctx.closePath();
+        ctx.fillStyle = ds.backgroundColor || 'rgba(37,99,235,.08)';
+        ctx.fill();
+      }
+      if (pts.length > 1) {
+        ctx.beginPath();
+        self._bezier(ctx, pts);
+        ctx.strokeStyle = ds.borderColor || '#2563eb';
+        ctx.lineWidth = ds.borderWidth || 2;
+        ctx.lineJoin = 'round';
+        ctx.stroke();
+      }
+      var pr = ds.pointRadius != null ? ds.pointRadius : 3;
+      if (pr > 0) {
+        ctx.fillStyle = ds.borderColor || '#2563eb';
+        pts.forEach(function (p) {
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, pr, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+    });
+  };
+  MiniChart.prototype._bar = function (ctx, W, H) {
+    var data = this.config.data, opts = this.config.options || {};
+    var labels = data.labels, datasets = data.datasets, n = labels.length;
+    if (!n || !datasets.length) return;
+    var sc = opts.scales || {};
+    var yMin = (sc.y && sc.y.min != null) ? sc.y.min : 0;
+    var yMax = (sc.y && sc.y.max != null) ? sc.y.max : 100;
+    var PAD = { t: 14, r: 14, b: 50, l: 38 };
+    var cW = W - PAD.l - PAD.r, cH = H - PAD.t - PAD.b;
+    this._grid(ctx, PAD, cW, cH, yMin, yMax, H);
+    var ds = datasets[0];
+    var slot = cW / n;
+    var barW = Math.min(Math.max(slot * 0.6, 6), 64);
+    var r = Math.min(4, barW * 0.2);
+    ds.data.forEach(function (v, i) {
+      var barH = Math.max(0, cH * (v - yMin) / (yMax - yMin));
+      var x = PAD.l + slot * i + slot / 2 - barW / 2;
+      var y = PAD.t + cH - barH;
+      var color = Array.isArray(ds.backgroundColor) ? ds.backgroundColor[i] : (ds.backgroundColor || '#2563eb');
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + barW - r, y);
+      ctx.quadraticCurveTo(x + barW, y, x + barW, y + r);
+      ctx.lineTo(x + barW, y + barH);
+      ctx.lineTo(x, y + barH);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.fillStyle = '#9ca3af';
+      ctx.font = '10px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      var lbl = labels[i];
+      var maxCh = Math.max(2, Math.floor(slot / 7));
+      var display = lbl.length > maxCh ? lbl.slice(0, maxCh - 1) + '…' : lbl;
+      ctx.fillText(display, x + barW / 2, H - PAD.b + 6);
+    });
+  };
+  window.Chart = function (canvas, config) { return new MiniChart(canvas, config); };
+})();
+
+// ── DATA ─────────────────────────────────────────────────────
+const CITIES = [
+  {name:'여수',region:'전라',keywords:['돌산도','향일암','오동도','여수밤바다','거문도']},
+  {name:'강릉',region:'강원',keywords:['경포대','안목해변','강릉커피거리','오죽헌','정동진']},
+  {name:'제주시',region:'제주',keywords:['한라산','용두암','제주올레','동문시장','에코랜드']},
+  {name:'경주',region:'경상',keywords:['불국사','석굴암','첨성대','황리단길','동궁과월지']},
+  {name:'전주',region:'전라',keywords:['한옥마을','경기전','전동성당','풍남문','전주비빔밥']},
+  {name:'부산',region:'경상',keywords:['해운대','광안리','감천문화마을','자갈치시장','태종대']},
+  {name:'속초',region:'강원',keywords:['속초해수욕장','청초호','아바이마을','설악산','속초중앙시장']},
+  {name:'통영',region:'경상',keywords:['미륵도','케이블카','동피랑','한려수도','굴']},
+  {name:'순천',region:'전라',keywords:['순천만습지','낙안읍성','정원박람회','선암사']},
+  {name:'서귀포시',region:'제주',keywords:['천지연폭포','중문해수욕장','성산일출봉','섭지코지']},
+  {name:'안동',region:'경상',keywords:['하회마을','도산서원','찜닭거리','월영교']},
+  {name:'군산',region:'전라',keywords:['근대문화거리','이성당','고군산군도','은파호수공원']},
+  {name:'춘천',region:'강원',keywords:['남이섬','강촌','의암호','닭갈비거리']},
+  {name:'평창',region:'강원',keywords:['알펜시아','대관령','오대산','휘닉스파크']},
+  {name:'보령',region:'충청',keywords:['대천해수욕장','머드축제','외연도']},
+  {name:'서울',region:'수도권',keywords:['경복궁','홍대','명동','북촌한옥마을','남산']},
+  {name:'공주',region:'충청',keywords:['무령왕릉','공산성','마곡사','제민천']},
+  {name:'인천',region:'수도권',keywords:['송도','차이나타운','강화도','을왕리해수욕장']},
+  {name:'수원',region:'수도권',keywords:['화성','행리단길','광교호수공원']},
+  {name:'천안',region:'충청',keywords:['독립기념관','아우내장터','천안삼거리공원']},
+];
+const COLORS=['#2563eb','#16a34a','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#15803d','#b45309','#1d4ed8'];
+
+// ── SEED RNG ─────────────────────────────────────────────────
+function seed(s){let h=0;for(let c of s)h=(Math.imul(31,h)+c.charCodeAt(0))|0;return Math.abs(h);}
+function sr(s,mn,mx){const x=Math.sin(s)*10000;return mn+Math.floor((x-Math.floor(x))*(mx-mn+1));}
+
+// ── STATE ─────────────────────────────────────────────────────
+const S={
+  apiId:'',apiSecret:'',isLive:false,
+  ovPeriod:'2w',selCity:null,cyPeriod:'2w',selKw:null,kwPeriod:'2w',
+  charts:{},cache:{},_toastTimer:null
+};
+
+// ── UI HELPERS ────────────────────────────────────────────────
+function showLoading(on,msg='데이터 불러오는 중...'){
+  const el=document.getElementById('loadingOverlay');
+  document.getElementById('loadingMsg').textContent=msg;
+  el.style.display=on?'flex':'none';
+}
+function showToast(msg,type='info'){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.style.background=type==='error'?'#dc2626':type==='success'?'#16a34a':'#1f2937';
+  el.style.display='block';
+  clearTimeout(S._toastTimer);
+  S._toastTimer=setTimeout(()=>{el.style.display='none';},4000);
+}
+function setDemoBar(elId,state){
+  const el=document.getElementById(elId);
+  if(!el)return;
+  if(state==='live'){
+    el.textContent='✅ 네이버 DataLab 실제 데이터로 표시 중';
+    el.style.cssText='background:var(--green-bg);border:1px solid #bbf7d0;border-radius:8px;padding:8px 14px;font-size:12px;color:var(--green);display:flex;align-items:center;gap:8px;margin-bottom:16px;';
+  } else if(state==='error'){
+    el.textContent='⚠️ API 오류 — 데모 데이터로 표시 중';
+    el.style.cssText='background:var(--red-bg);border:1px solid #fecaca;border-radius:8px;padding:8px 14px;font-size:12px;color:var(--red);display:flex;align-items:center;gap:8px;margin-bottom:16px;';
+  } else {
+    el.textContent='⚡ 데모 데이터로 표시 중 — 우상단에 네이버 API 키 입력 후 저장 시 실제 데이터로 전환됩니다';
+    el.style.cssText='background:var(--amber-bg);border:1px solid #fde68a;border-radius:8px;padding:8px 14px;font-size:12px;color:var(--amber);display:flex;align-items:center;gap:8px;margin-bottom:16px;';
+  }
+}
+
+// ── NAVER DATALAB API ─────────────────────────────────────────
+const CORS_PROXY='https://corsproxy.io/?';
+const NAVER_DATALAB='https://openapi.naver.com/v1/datalab/search';
+
+function getPeriodDates(p){
+  const end=new Date();
+  const start=new Date();
+  let timeUnit;
+  if(p==='2w'){start.setDate(start.getDate()-13);timeUnit='date';}
+  else if(p==='1m'){start.setDate(start.getDate()-29);timeUnit='week';}
+  else if(p==='3m'){start.setDate(start.getDate()-89);timeUnit='week';}
+  else{start.setFullYear(start.getFullYear()-1);start.setDate(1);timeUnit='month';}
+  const fmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return{startDate:fmt(start),endDate:fmt(end),timeUnit};
+}
+
+async function callDataLab(keywordGroups,period){
+  const{startDate,endDate,timeUnit}=getPeriodDates(period);
+  const url=CORS_PROXY+encodeURIComponent(NAVER_DATALAB);
+  const res=await fetch(url,{
+    method:'POST',
+    headers:{
+      'X-Naver-Client-Id':S.apiId,
+      'X-Naver-Client-Secret':S.apiSecret,
+      'Content-Type':'application/json',
+    },
+    body:JSON.stringify({startDate,endDate,timeUnit,keywordGroups})
+  });
+  if(!res.ok){
+    let msg=`HTTP ${res.status}`;
+    try{const e=await res.json();msg=e.errorMessage||msg;}catch{}
+    throw new Error(msg);
+  }
+  const data=await res.json();
+  if(data.errorCode)throw new Error(data.errorMessage||`오류 코드: ${data.errorCode}`);
+  data._timeUnit=timeUnit;
+  return data;
+}
+
+function labelFromPeriod(period,timeUnit){
+  const p=period.split('-');
+  if(timeUnit==='month')return`${parseInt(p[1])}월`;
+  return`${parseInt(p[1])}/${parseInt(p[2])}`;
+}
+
+function parseApiResults(apiData){
+  const tu=apiData._timeUnit||'date';
+  return apiData.results.map(r=>{
+    const vals=r.data.map(d=>d.ratio);
+    const labels=r.data.map(d=>labelFromPeriod(d.period,tu));
+    const n=vals.length;
+    const third=Math.max(1,Math.floor(n/3));
+    const avgFirst=vals.slice(0,third).reduce((a,b)=>a+b,0)/third||0.1;
+    const avgLast=vals.slice(n-third).reduce((a,b)=>a+b,0)/third;
+    const score=Math.round(vals.reduce((a,b)=>a+b,0)/n);
+    const chg=Math.round(((avgLast-avgFirst)/avgFirst)*100);
+    return{name:r.title,vals,labels,score,chg};
+  });
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+function init(){
+  buildCityNav();
+  renderOverview('2w');
+  document.getElementById('globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter')doGlobalSearch();});
+}
+
+function buildCityNav(){
+  const el=document.getElementById('cityNav');
+  const grouped={};
+  CITIES.forEach(c=>{(grouped[c.region]||(grouped[c.region]=[])).push(c);});
+  el.innerHTML=Object.entries(grouped).map(([r,cs])=>
+    cs.map(c=>`<div class="nav-item" id="cnav-${c.name}" onclick="selectCity('${c.name}')">
+      <span style="font-size:11px;color:var(--text3);width:18px;text-align:center">${r[0]}</span> ${c.name}</div>`
+    ).join('')
+  ).join('');
+}
+
+// ── NAV ───────────────────────────────────────────────────────
+function goPage(pg){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item[id^="nav-"]').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+pg).classList.add('active');
+  document.getElementById('nav-'+pg).classList.add('active');
+}
+
+async function saveApi(){
+  S.apiId=document.getElementById('apiId').value.trim();
+  S.apiSecret=document.getElementById('apiSecret').value.trim();
+  if(!S.apiId||!S.apiSecret){
+    S.isLive=false;
+    document.getElementById('apiDot').className='api-dot';
+    showToast('Client ID와 Secret을 모두 입력하세요','error');
+    return;
+  }
+  showLoading(true,'API 키 확인 중...');
+  try{
+    await callDataLab([{groupName:'테스트',keywords:['여행']}],'1m');
+    S.isLive=true;
+    S.cache={};
+    document.getElementById('apiDot').className='api-dot live';
+    document.getElementById('apiDot').title='실제 API 모드';
+    showToast('✅ API 연결 성공! 실제 데이터를 불러옵니다.','success');
+    renderCurrentPage();
+  }catch(e){
+    S.isLive=false;
+    document.getElementById('apiDot').className='api-dot';
+    document.getElementById('apiDot').title='데모 모드 (API 오류)';
+    showToast('API 오류: '+e.message,'error');
+  }finally{
+    showLoading(false);
+  }
+}
+
+function renderCurrentPage(){
+  const active=document.querySelector('.page.active');
+  if(!active)return;
+  if(active.id==='page-overview')renderOverview(S.ovPeriod);
+  else if(active.id==='page-city'&&S.selCity)renderCity(S.selCity,S.cyPeriod);
+  else if(active.id==='page-keyword'&&S.selKw)renderKeyword(S.selKw,S.kwPeriod);
+}
+
+function doGlobalSearch(){
+  const v=document.getElementById('globalSearch').value.trim();
+  if(!v)return;
+  searchKeyword(v);
+}
+
+// ── PERIOD HELPERS ────────────────────────────────────────────
+function getPoints(p){
+  if(p==='2w')return{n:14,labelFn:i=>{const d=new Date();d.setDate(d.getDate()-(13-i));return(d.getMonth()+1)+'/'+(d.getDate());}};
+  if(p==='1m')return{n:8,labelFn:i=>{const d=new Date();d.setDate(d.getDate()-Math.round((7-i)*4.5));return(d.getMonth()+1)+'/'+(d.getDate());}};
+  if(p==='3m')return{n:12,labelFn:i=>{const d=new Date();d.setDate(d.getDate()-Math.round((11-i)*7.5));return(d.getMonth()+1)+'월';}};
+  return{n:12,labelFn:i=>{const d=new Date();d.setMonth(d.getMonth()-(11-i));return(d.getMonth()+1)+'월';}};
+}
+
+// ── CHART HELPERS ─────────────────────────────────────────────
+function destroyChart(id){if(S.charts[id]){S.charts[id].destroy();delete S.charts[id];}}
+function mkLine(id,labels,datasets,opts={}){
+  destroyChart(id);
+  const wrap=document.getElementById(id).parentElement;
+  wrap.style.height=opts.h||'200px';
+  S.charts[id]=new Chart(document.getElementById(id),{
+    type:'line',data:{labels,datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{min:0,max:100,ticks:{color:'#9ca3af',font:{size:11},stepSize:25},grid:{color:'rgba(0,0,0,.06)'}},
+        x:{ticks:{color:'#9ca3af',font:{size:10},autoSkip:labels.length>10,maxRotation:0},grid:{display:false}}
+      },...(opts.scales||{})}
+  });
+}
+function mkBar(id,labels,data,colors,opts={}){
+  destroyChart(id);
+  S.charts[id]=new Chart(document.getElementById(id),{
+    type:'bar',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        y:{min:0,max:100,ticks:{color:'#9ca3af',font:{size:11}},grid:{color:'rgba(0,0,0,.06)'}},
+        x:{ticks:{color:'#9ca3af',font:{size:11},autoSkip:false,maxRotation:30},grid:{display:false}}
+      },...(opts.scales||{})}
+  });
+}
+
+// ── SPARKLINE ─────────────────────────────────────────────────
+function renderSpark(containerId,vals,labels){
+  const el=document.getElementById(containerId);
+  if(!el)return;
+  const mx=Math.max(...vals,1);
+  el.innerHTML=vals.map((v,i)=>{
+    const h=Math.round(v/mx*100);
+    const col=v>70?'#16a34a':v>40?'#2563eb':'#9ca3af';
+    return`<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;">
+      <div style="font-size:9px;color:var(--text3)">${Math.round(v)}</div>
+      <div style="height:${h}%;min-height:4px;width:100%;background:${col};border-radius:2px 2px 0 0;"></div>
+      <div style="font-size:9px;color:var(--text3);white-space:nowrap">${labels[i]}</div>
+    </div>`;
+  }).join('');
+  el.style.alignItems='flex-end';
+  el.style.height='80px';
+}
+function demoSpark(containerId,key,period){
+  const vals=Array.from({length:14},(_,i)=>sr(seed(key+i+period+'sp'),10,100));
+  const labels=Array.from({length:14},(_,i)=>{
+    const d=new Date();d.setDate(d.getDate()-(13-i));
+    return(d.getMonth()+1)+'/'+(d.getDate());
+  });
+  renderSpark(containerId,vals,labels);
+}
+
+// ── OVERVIEW ─────────────────────────────────────────────────
+function ovPeriod(btn,p){
+  document.querySelectorAll('#page-overview .ptab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');S.ovPeriod=p;renderOverview(p);
+}
+
+async function renderOverview(p){
+  if(!S.isLive){setDemoBar('ovDemo','demo');_drawOverview(p,null,null);return;}
+  const ck='ov_'+p;
+  if(S.cache[ck]){setDemoBar('ovDemo','live');_drawOverview(p,S.cache[ck].cdm,S.cache[ck].chart);return;}
+  showLoading(true,'전국 20개 도시 데이터 불러오는 중...');
+  try{
+    const batches=[];
+    for(let i=0;i<CITIES.length;i+=5)batches.push(CITIES.slice(i,i+5));
+    const batchRes=await Promise.all(
+      batches.map(b=>callDataLab(
+        b.map(c=>({groupName:c.name,keywords:[c.name,c.name+'여행',c.name+'숙소']})),p
+      ))
+    );
+    const cdm={};
+    batchRes.forEach(res=>parseApiResults(res).forEach(r=>{cdm[r.name]=r;}));
+    const top5names=[...CITIES].map(c=>({...c,...(cdm[c.name]||{chg:0})}))
+      .sort((a,b)=>b.chg-a.chg).slice(0,5).map(c=>c.name);
+    const chartRes=await callDataLab(
+      top5names.map(n=>({groupName:n,keywords:[n,n+'여행']})),p
+    );
+    const chart={};
+    parseApiResults(chartRes).forEach(r=>{chart[r.name]=r;});
+    S.cache[ck]={cdm,chart};
+    setDemoBar('ovDemo','live');
+    _drawOverview(p,cdm,chart);
+  }catch(e){
+    setDemoBar('ovDemo','error');
+    showToast(e.message,'error');
+    _drawOverview(p,null,null);
+  }finally{showLoading(false);}
+}
+
+function _drawOverview(p,cdm,chartData){
+  const scored=CITIES.map(c=>{
+    if(cdm&&cdm[c.name])return{...c,score:cdm[c.name].score,chg:cdm[c.name].chg};
+    return{...c,score:sr(seed(c.name+p+'sc'),30,98),chg:sr(seed(c.name+p+'ch'),-28,32)};
+  });
+  const rising=[...scored].sort((a,b)=>b.chg-a.chg).slice(0,10);
+  const falling=[...scored].sort((a,b)=>a.chg-b.chg).slice(0,10);
+  const upN=scored.filter(c=>c.chg>3).length;
+  const dnN=scored.filter(c=>c.chg<-3).length;
+
+  document.getElementById('ov-top').textContent=rising[0].name;
+  document.getElementById('ov-up').textContent=upN;
+  document.getElementById('ov-dn').textContent=dnN;
+  document.getElementById('ov-flat').textContent=CITIES.length-upN-dnN;
+
+  const maxR=Math.max(...rising.map(c=>c.score),1);
+  document.getElementById('ov-rising').innerHTML=rising.map((c,i)=>`
+    <div class="rank-row" onclick="selectCity('${c.name}')">
+      <span class="rank-num">${i+1}</span>
+      <span class="rank-dot" style="background:${COLORS[i%COLORS.length]}"></span>
+      <span class="rank-name">${c.name}</span>
+      <span class="rank-region">${c.region}</span>
+      <div class="rank-bar-bg"><div class="rank-bar" style="width:${Math.round(c.score/maxR*100)}%;background:${COLORS[i%COLORS.length]}"></div></div>
+      <span class="rank-pct" style="color:var(--green)">+${c.chg}%</span>
+    </div>`).join('');
+
+  const maxF=Math.max(...falling.map(c=>Math.abs(c.chg)),1);
+  document.getElementById('ov-falling').innerHTML=falling.map((c,i)=>`
+    <div class="rank-row" onclick="selectCity('${c.name}')">
+      <span class="rank-num">${i+1}</span>
+      <span class="rank-dot" style="background:#ef4444"></span>
+      <span class="rank-name">${c.name}</span>
+      <span class="rank-region">${c.region}</span>
+      <div class="rank-bar-bg"><div class="rank-bar" style="width:${Math.round(Math.abs(c.chg)/maxF*100)}%;background:#ef4444"></div></div>
+      <span class="rank-pct" style="color:var(--red)">${c.chg}%</span>
+    </div>`).join('');
+
+  const allKw=[];
+  CITIES.forEach(c=>c.keywords.forEach(kw=>{
+    allKw.push({kw,city:c.name,chg:sr(seed(kw+c.name+p+'kc'),-35,42)});
+  }));
+  const upKw=[...allKw].sort((a,b)=>b.chg-a.chg).slice(0,10);
+  const dnKw=[...allKw].sort((a,b)=>a.chg-b.chg).slice(0,10);
+
+  document.getElementById('ov-kwup').innerHTML=upKw.map((r,i)=>`
+    <div class="kw-row" onclick="searchKeyword('${r.kw}')">
+      <span class="kw-rank">${i+1}</span><span class="kw-name">${r.kw}</span>
+      <span class="kw-city">${r.city}</span><span class="badge up">+${r.chg}%</span>
+    </div>`).join('');
+  document.getElementById('ov-kwdn').innerHTML=dnKw.map((r,i)=>`
+    <div class="kw-row" onclick="searchKeyword('${r.kw}')">
+      <span class="kw-rank">${i+1}</span><span class="kw-name">${r.kw}</span>
+      <span class="kw-city">${r.city}</span><span class="badge dn">${r.chg}%</span>
+    </div>`).join('');
+
+  const top5=rising.slice(0,5);
+  let labels,datasets;
+  if(chartData&&top5[0]&&chartData[top5[0].name]){
+    labels=chartData[top5[0].name].labels;
+    datasets=top5.filter(c=>chartData[c.name]).map((c,i)=>({
+      label:c.name,data:chartData[c.name].vals,
+      borderColor:COLORS[i],backgroundColor:'transparent',
+      borderWidth:2,pointRadius:p==='2w'?3:2,tension:.4,
+    }));
+  }else{
+    const{n,labelFn}=getPoints(p);
+    labels=Array.from({length:n},(_,i)=>labelFn(i));
+    datasets=top5.map((c,i)=>({
+      label:c.name,
+      data:Array.from({length:n},(_,j)=>sr(seed(c.name+j+p+'tr'),15,95)),
+      borderColor:COLORS[i],backgroundColor:'transparent',
+      borderWidth:2,pointRadius:p==='2w'?3:2,tension:.4,
+    }));
+  }
+  mkLine('ovChart',labels,datasets,{h:'220px'});
+  document.getElementById('ovLegend').innerHTML=top5.map((c,i)=>
+    `<div class="legend-item"><span class="legend-sq" style="background:${COLORS[i]}"></span>${c.name}</div>`
+  ).join('');
+}
+
+// ── CITY ─────────────────────────────────────────────────────
+function selectCity(name){
+  S.selCity=name;
+  document.querySelectorAll('[id^="cnav-"]').forEach(el=>el.classList.remove('active'));
+  const nav=document.getElementById('cnav-'+name);
+  if(nav)nav.classList.add('active');
+  goPage('city');
+  renderCity(name,S.cyPeriod);
+}
+
+function cityPeriod(btn,p){
+  document.querySelectorAll('#page-city .ptab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');S.cyPeriod=p;
+  if(S.selCity)renderCity(S.selCity,p);
+}
+
+async function renderCity(name,p){
+  const city=CITIES.find(c=>c.name===name);
+  if(!city)return;
+  document.getElementById('city-title').textContent=city.name+' 분석';
+  document.getElementById('cy-kw-period').textContent=p==='2w'?'2주':p==='1m'?'1개월':p==='3m'?'3개월':'1년';
+  document.getElementById('city-empty').style.display='none';
+  document.getElementById('city-content').style.display='block';
+  if(!S.isLive){setDemoBar('cyDemo','demo');_drawCity(name,p,null,null);return;}
+  const ck='city_'+name+'_'+p;
+  if(S.cache[ck]){setDemoBar('cyDemo','live');_drawCity(name,p,S.cache[ck].overall,S.cache[ck].kw);return;}
+  showLoading(true,city.name+' 데이터 불러오는 중...');
+  try{
+    const groups=[
+      {groupName:name,keywords:[name,name+'여행',name+'숙소',name+'맛집']},
+      ...city.keywords.slice(0,4).map(kw=>({groupName:kw,keywords:[kw,name+' '+kw]}))
+    ];
+    const res=await callDataLab(groups,p);
+    const parsed=parseApiResults(res);
+    const overall=parsed[0];
+    const kw={};
+    parsed.slice(1).forEach(r=>{kw[r.name]=r;});
+    S.cache[ck]={overall,kw};
+    setDemoBar('cyDemo','live');
+    _drawCity(name,p,overall,kw);
+  }catch(e){
+    setDemoBar('cyDemo','error');
+    showToast(e.message,'error');
+    _drawCity(name,p,null,null);
+  }finally{showLoading(false);}
+}
+
+function _drawCity(name,p,overall,kwData){
+  const city=CITIES.find(c=>c.name===name);
+  if(!city)return;
+  let idx,chg,peakM;
+  if(overall){
+    idx=overall.score;chg=overall.chg;
+    const pi=overall.vals.indexOf(Math.max(...overall.vals));
+    peakM=overall.labels[pi]||'—';
+  }else{
+    idx=sr(seed(name+p+'idx'),40,95);chg=sr(seed(name+p+'chg'),-20,30);
+    const months=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+    peakM=months[sr(seed(name+'peak'),0,11)];
+  }
+  document.getElementById('cy-idx').textContent=idx;
+  const ce=document.getElementById('cy-chg');
+  ce.textContent=(chg>=0?'+':'')+chg+'%';
+  ce.className='metric-val '+(chg>=0?'up':'dn');
+  document.getElementById('cy-peak').textContent=peakM;
+  document.getElementById('cy-kwcnt').textContent=city.keywords.length*4;
+  if(p==='2w'&&overall)renderSpark('cy-spark-row',overall.vals,overall.labels);
+  else demoSpark('cy-spark-row',name+'city',p);
+  document.getElementById('cy-spark-panel').style.display=p==='2w'?'block':'none';
+  document.getElementById('cy-tags').innerHTML=city.keywords.map(k=>
+    `<span class="city-tag" onclick="searchKeyword('${name} ${k}')">${k}</span>`).join('');
+  const kwNames=kwData&&Object.keys(kwData).length?city.keywords.slice(0,4):city.keywords;
+  const kwScores=kwNames.map(k=>(kwData&&kwData[k])?kwData[k].score:sr(seed(k+name+p+'bar'),20,95));
+  mkBar('cityBarChart',kwNames,kwScores,kwNames.map((_,i)=>COLORS[i%COLORS.length]),{h:'220px'});
+  const ll=overall?overall.labels:Array.from({length:12},(_,i)=>{const d=new Date();d.setMonth(d.getMonth()-(11-i));return(d.getMonth()+1)+'월';});
+  const ld=overall?overall.vals:Array.from({length:12},(_,j)=>sr(seed(name+j+'mtr'),15,95));
+  mkLine('cityLineChart',ll,[{
+    label:name,data:ld,borderColor:COLORS[0],backgroundColor:'transparent',
+    borderWidth:2,pointRadius:3,tension:.4,
+  }],{h:'160px'});
+  const suffixes=['맛집','숙소','카페','호텔','펜션','드라이브','주차','날씨','축제','사진'];
+  const related=suffixes.map(sf=>({name:name+' '+sf,score:sr(seed(name+sf+p+'rel'),20,95)}))
+    .sort((a,b)=>b.score-a.score);
+  document.getElementById('cy-related').innerHTML=related.slice(0,8).map((r,i)=>`
+    <div class="kw-row" onclick="searchKeyword('${r.name}')">
+      <span class="kw-rank">${i+1}</span><span class="kw-name">${r.name}</span>
+      <span class="badge ${r.score>60?'up':'dn'}">${r.score}</span>
+    </div>`).join('');
+}
+
+// ── KEYWORD ───────────────────────────────────────────────────
+function searchKeyword(kw){
+  if(kw)document.getElementById('globalSearch').value=kw;
+  S.selKw=kw||document.getElementById('globalSearch').value.trim();
+  if(!S.selKw)return;
+  goPage('keyword');
+  renderKeyword(S.selKw,S.kwPeriod);
+}
+
+function kwPeriod(btn,p){
+  document.querySelectorAll('#page-keyword .ptab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');S.kwPeriod=p;
+  if(S.selKw)renderKeyword(S.selKw,p);
+}
+
+async function renderKeyword(kw,p){
+  document.getElementById('kw-empty').style.display='none';
+  document.getElementById('kw-content').style.display='block';
+  document.getElementById('kw-title-text').textContent='"'+kw+'"';
+  if(!S.isLive){setDemoBar('kwDemo','demo');_drawKeyword(kw,p,null);return;}
+  const ck='kw_'+kw+'_'+p;
+  if(S.cache[ck]){setDemoBar('kwDemo','live');_drawKeyword(kw,p,S.cache[ck]);return;}
+  showLoading(true,'"'+kw+'" 데이터 불러오는 중...');
+  try{
+    const groups=[
+      {groupName:kw,keywords:[kw]},
+      {groupName:kw+' 맛집',keywords:[kw+' 맛집']},
+      {groupName:kw+' 숙소',keywords:[kw+' 숙소']},
+      {groupName:kw+' 카페',keywords:[kw+' 카페']},
+      {groupName:kw+' 드라이브',keywords:[kw+' 드라이브']},
+    ];
+    const res=await callDataLab(groups,p);
+    const parsed=parseApiResults(res);
+    S.cache[ck]=parsed;
+    setDemoBar('kwDemo','live');
+    _drawKeyword(kw,p,parsed);
+  }catch(e){
+    setDemoBar('kwDemo','error');
+    showToast(e.message,'error');
+    _drawKeyword(kw,p,null);
+  }finally{showLoading(false);}
+}
+
+function _drawKeyword(kw,p,parsed){
+  let trendVals,labels,cur,chg;
+  if(parsed&&parsed[0]){
+    trendVals=parsed[0].vals;labels=parsed[0].labels;
+    cur=parsed[0].score;chg=parsed[0].chg;
+  }else{
+    const{n,labelFn}=getPoints(p);
+    trendVals=Array.from({length:n},(_,i)=>sr(seed(kw+i+p+'ktr'),10,95));
+    labels=Array.from({length:n},(_,i)=>labelFn(i));
+    cur=trendVals[trendVals.length-1];
+    const prev=trendVals[trendVals.length-2]||cur;
+    chg=prev?Math.round(((cur-prev)/prev)*100):0;
+  }
+  const dir=chg>5?'상승':chg<-5?'하락':'보합';
+  document.getElementById('kw-cur').textContent=cur;
+  const ce=document.getElementById('kw-chg');
+  ce.textContent=(chg>=0?'+':'')+chg+'%';
+  ce.className='metric-val '+(chg>=0?'up':'dn');
+  const te=document.getElementById('kw-trend');
+  te.textContent=dir==='상승'?'↑ 상승':dir==='하락'?'↓ 하락':'→ 보합';
+  te.style.color=dir==='상승'?'var(--green)':dir==='하락'?'var(--red)':'var(--text2)';
+  if(p==='2w'&&parsed&&parsed[0])renderSpark('kw-spark-row',parsed[0].vals,parsed[0].labels);
+  else demoSpark('kw-spark-row',kw,p);
+  document.getElementById('kw-spark-panel').style.display=p==='2w'?'block':'none';
+  mkLine('kwLineChart',labels,[{
+    label:kw,data:trendVals,borderColor:COLORS[0],backgroundColor:'rgba(37,99,235,.08)',
+    borderWidth:2,pointRadius:p==='2w'?3:2,tension:.4,fill:true,
+  }],{h:'200px'});
+  const liveSfMap={};
+  if(parsed&&parsed.length>1){
+    parsed.slice(1).forEach(r=>{
+      const sf=r.name.replace(kw+' ','');
+      liveSfMap[sf]=r.score;
+    });
+  }
+  const suffixes=['맛집','숙소','카페','호텔','펜션','드라이브','주차','날씨','축제','사진','근처','입장료'];
+  const related=suffixes.map(sf=>({
+    name:kw+' '+sf,
+    score:liveSfMap[sf]!==undefined?liveSfMap[sf]:sr(seed(kw+sf+p+'rr'),15,95)
+  })).sort((a,b)=>b.score-a.score);
+  document.getElementById('kw-related-list').innerHTML=related.slice(0,10).map((r,i)=>`
+    <div class="kw-row" onclick="searchKeyword('${r.name}')">
+      <span class="kw-rank">${i+1}</span><span class="kw-name">${r.name}</span>
+      <span class="badge ${r.score>60?'up':'dn'}">${r.score}</span>
+    </div>`).join('');
+  const top=related.filter(r=>r.score>60);
+  document.getElementById('kw-top-related').innerHTML=top.length
+    ?top.map((r,i)=>`
+      <div class="kw-row" onclick="searchKeyword('${r.name}')">
+        <span class="kw-rank">${i+1}</span><span class="kw-name">${r.name}</span>
+        <span class="badge up">🔥 ${r.score}</span>
+      </div>`).join('')
+    :'<div style="color:var(--text3);font-size:13px;padding:12px 8px">지수 60 이상 키워드 없음</div>';
+  const top8=related.slice(0,8);
+  mkBar('kwBarChart',top8.map(r=>r.name.replace(kw+' ','')),top8.map(r=>r.score),
+    top8.map(r=>r.score>60?'#16a34a':'#2563eb'),{h:'200px'});
+}
+
+init();
+</script>
