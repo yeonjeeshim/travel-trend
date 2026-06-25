@@ -696,7 +696,23 @@ function parseApiResults(apiData){
 // ── INIT ──────────────────────────────────────────────────────
 function init(){
   buildCityNav();
-  renderOverview('2w');
+  const savedId=localStorage.getItem('naver_api_id');
+  const savedSecret=localStorage.getItem('naver_api_secret');
+  if(savedId&&savedSecret){
+    document.getElementById('apiId').value=savedId;
+    document.getElementById('apiSecret').value=savedSecret;
+    S.apiId=savedId;S.apiSecret=savedSecret;
+    callDataLab([{groupName:'테스트',keywords:['여행']}],'1m')
+      .then(()=>{
+        S.isLive=true;
+        document.getElementById('apiDot').className='api-dot live';
+        document.getElementById('apiDot').title='실제 API 모드';
+      })
+      .catch(()=>{})
+      .finally(()=>renderOverview('2w'));
+  } else {
+    renderOverview('2w');
+  }
   document.getElementById('globalSearch').addEventListener('keydown',e=>{if(e.key==='Enter')doGlobalSearch();});
 }
 
@@ -735,9 +751,11 @@ async function saveApi(){
     await callDataLab([{groupName:'테스트',keywords:['여행']}],'1m');
     S.isLive=true;
     S.cache={};
+    localStorage.setItem('naver_api_id',S.apiId);
+    localStorage.setItem('naver_api_secret',S.apiSecret);
     document.getElementById('apiDot').className='api-dot live';
     document.getElementById('apiDot').title='실제 API 모드';
-    showToast('✅ API 연결 성공! 실제 데이터를 불러옵니다.','success');
+    showToast('✅ API 연결 성공! 키가 브라우저에 저장됩니다.','success');
     renderCurrentPage();
   }catch(e){
     S.isLive=false;
