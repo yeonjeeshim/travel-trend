@@ -1574,7 +1574,7 @@ async function loadRanking() {
   const { startDate, endDate } = getRkDates(S.rkPeriod);
 
   try {
-    const RK_KEYWORDS = ['펜션','호텔','리조트','풀빌라','게스트하우스','모텔','글램핑','풀빌라','한옥숙박','캠핑'];
+    const RK_KEYWORDS = ['펜션','호텔','리조트','풀빌라','글램핑'];
     const body = {
       startDate, endDate,
       timeUnit: S.rkPeriod === '1w' ? 'date' : 'week',
