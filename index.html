@@ -15,6 +15,8 @@
   --red-bg:#fef2f2;
   --amber:#d97706;
   --amber-bg:#fffbeb;
+  --purple:#7c3aed;
+  --purple-bg:#f5f3ff;
   --text:#111827;
   --text2:#6b7280;
   --text3:#9ca3af;
@@ -91,6 +93,34 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
 .badge{font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;flex-shrink:0;}
 .badge.up{background:var(--green-bg);color:var(--green);}
 .badge.dn{background:var(--red-bg);color:var(--red);}
+.badge.neu{background:var(--surface2);color:var(--text2);}
+
+.stay-type-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.sttab{font-size:12px;padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;transition:all .12s;font-family:inherit;}
+.sttab:hover{border-color:var(--purple);color:var(--purple);}
+.sttab.on{background:var(--purple);border-color:var(--purple);color:#fff;font-weight:500;}
+.sttab.on-all{background:var(--text);border-color:var(--text);color:#fff;font-weight:500;}
+.heat-cell{border-radius:8px;padding:9px 10px 7px;cursor:pointer;transition:all .15s;text-align:center;}
+.heat-cell:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.1);}
+.hc-city{font-size:11px;font-weight:500;margin-bottom:1px;}
+.hc-type{font-size:10px;opacity:.65;margin-bottom:5px;}
+.hc-score{font-size:17px;font-weight:700;line-height:1;}
+.hc-chg{font-size:10px;margin-top:2px;}
+.stay-rank-table{width:100%;border-collapse:collapse;}
+.stay-rank-table th{font-size:11px;color:var(--text3);font-weight:500;padding:6px 10px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap;}
+.stay-rank-table td{font-size:13px;padding:7px 10px;border-bottom:1px solid var(--border);}
+.stay-rank-table tr:last-child td{border-bottom:none;}
+.stay-rank-table tr:hover td{background:var(--surface2);cursor:pointer;}
+.stay-rank-table td.fw{font-weight:500;}
+.type-pill{font-size:11px;padding:2px 8px;border-radius:12px;font-weight:500;}
+.tp-펜션{background:#eff4ff;color:#2563eb;}
+.tp-호텔{background:#f5f3ff;color:#7c3aed;}
+.tp-리조트{background:#f0fdf4;color:#16a34a;}
+.tp-풀빌라{background:#fff7ed;color:#ea580c;}
+.tp-게스트하우스{background:#fef2f2;color:#dc2626;}
+.tp-모텔{background:#fefce8;color:#ca8a04;}
+.mini-spark{display:flex;align-items:flex-end;gap:1px;height:24px;width:56px;}
+.ms-bar{flex:1;border-radius:1px 1px 0 0;min-height:2px;}
 
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;}
@@ -151,6 +181,9 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
     <div class="nav-section-label">분석 화면</div>
     <div class="nav-item active" onclick="goPage('overview')" id="nav-overview">
       <span class="nav-icon">🗺</span> 전체 현황
+    </div>
+    <div class="nav-item" onclick="goPage('stay')" id="nav-stay">
+      <span class="nav-icon">🏨</span> 숙소 수요
     </div>
     <div class="nav-item" onclick="goPage('city')" id="nav-city">
       <span class="nav-icon">🏙</span> 도시 분석
@@ -218,6 +251,92 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
       <div class="panel-title">뜨는 지역 TOP 5 — 검색량 추이</div>
       <div class="chart-wrap"><canvas id="ovChart" role="img" aria-label="뜨는 지역 TOP5 검색량 추이"></canvas></div>
       <div class="legend-row" id="ovLegend"></div>
+    </div>
+
+    <div class="g2 mb14">
+      <div class="panel">
+        <div class="panel-title">🏨 숙소 타입별 검색량 <span class="hl" id="ov-stay-period-label">2주</span></div>
+        <div class="chart-wrap" style="height:180px;"><canvas id="ovStayTypeChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">🔥 뜨는 숙소 조합 TOP 5</div>
+        <div class="kw-list" id="ov-stay-rising"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: 숙소 수요 -->
+  <div class="page" id="page-stay">
+    <div class="page-title">숙소 수요</div>
+    <div class="page-sub">지역 × 숙소 타입 검색량 — 어느 지역 어느 타입이 지금 뜨고 있는지</div>
+    <div class="period-row">
+      <button class="ptab on" onclick="stPeriod(this,'2w')">2주</button>
+      <button class="ptab" onclick="stPeriod(this,'1m')">1개월</button>
+      <button class="ptab" onclick="stPeriod(this,'3m')">3개월</button>
+      <button class="ptab" onclick="stPeriod(this,'1y')">1년</button>
+    </div>
+    <div class="demo-bar">⚡ 데모 데이터로 표시 중 — API 키 입력 시 실제 네이버 데이터랩 기반으로 전환됩니다</div>
+
+    <div style="font-size:12px;color:var(--text2);margin-bottom:6px;">숙소 타입 필터</div>
+    <div class="stay-type-tabs">
+      <button class="sttab on-all" onclick="stType(this,'all')">전체</button>
+      <button class="sttab" onclick="stType(this,'펜션')">🏡 펜션</button>
+      <button class="sttab" onclick="stType(this,'호텔')">🏨 호텔</button>
+      <button class="sttab" onclick="stType(this,'리조트')">🌴 리조트</button>
+      <button class="sttab" onclick="stType(this,'풀빌라')">🏊 풀빌라</button>
+      <button class="sttab" onclick="stType(this,'게스트하우스')">🛏 게스트하우스</button>
+      <button class="sttab" onclick="stType(this,'모텔')">🚗 모텔</button>
+    </div>
+
+    <div class="g4 mb14">
+      <div class="metric"><div class="metric-val ac" id="st-total">—</div><div class="metric-lbl">분석 조합</div></div>
+      <div class="metric"><div class="metric-val up" id="st-top1">—</div><div class="metric-lbl">1위 조합</div></div>
+      <div class="metric"><div class="metric-val" id="st-toptype" style="color:var(--purple)">—</div><div class="metric-lbl">가장 뜨는 타입</div></div>
+      <div class="metric"><div class="metric-val ac" id="st-topcity">—</div><div class="metric-lbl">가장 뜨는 지역</div></div>
+    </div>
+
+    <div class="g2 mb14">
+      <div class="panel">
+        <div class="panel-title">숙소 타입별 평균 검색량 비교</div>
+        <div class="chart-wrap" style="height:220px;"><canvas id="stTypeChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">지역별 숙소 검색량 TOP 10</div>
+        <div class="chart-wrap" style="height:220px;"><canvas id="stCityChart"></canvas></div>
+      </div>
+    </div>
+    <div class="panel mb14">
+      <div class="panel-title">뜨는 조합 TOP 5 — 검색량 추이</div>
+      <div class="chart-wrap" style="height:220px;"><canvas id="stTrendChart"></canvas></div>
+      <div class="legend-row" id="stTrendLegend"></div>
+    </div>
+
+    <div class="panel mb14">
+      <div class="panel-title">지역 × 숙소 타입 검색량 히트맵 <span class="hl" id="st-period-label">2주</span>
+        <span style="font-size:11px;color:var(--text3);font-weight:400;margin-left:6px;">테두리 강조 = 상승세 강한 조합</span>
+      </div>
+      <div style="overflow-x:auto;"><div id="stHeatmap"></div></div>
+    </div>
+
+    <div class="g2 mb14">
+      <div class="panel">
+        <div class="panel-title">🔥 뜨는 조합 TOP 15</div>
+        <div style="overflow-x:auto;">
+          <table class="stay-rank-table">
+            <thead><tr><th>#</th><th>지역</th><th>타입</th><th>지수</th><th>변화</th><th>2주 추이</th></tr></thead>
+            <tbody id="stRisingBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">📉 지는 조합 TOP 15</div>
+        <div style="overflow-x:auto;">
+          <table class="stay-rank-table">
+            <thead><tr><th>#</th><th>지역</th><th>타입</th><th>지수</th><th>변화</th><th>2주 추이</th></tr></thead>
+            <tbody id="stFallingBody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -592,6 +711,9 @@ const CITIES = [
   {name:'천안',region:'충청',keywords:['독립기념관','아우내장터','천안삼거리공원']},
 ];
 const COLORS=['#2563eb','#16a34a','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#15803d','#b45309','#1d4ed8'];
+const STAY_TYPES=['펜션','호텔','리조트','풀빌라','게스트하우스','모텔'];
+const TC={'펜션':'#2563eb','호텔':'#7c3aed','리조트':'#16a34a','풀빌라':'#ea580c','게스트하우스':'#dc2626','모텔':'#ca8a04'};
+const TB={'펜션':'#eff4ff','호텔':'#f5f3ff','리조트':'#f0fdf4','풀빌라':'#fff7ed','게스트하우스':'#fef2f2','모텔':'#fefce8'};
 
 // ── SEED RNG ─────────────────────────────────────────────────
 function seed(s){let h=0;for(let c of s)h=(Math.imul(31,h)+c.charCodeAt(0))|0;return Math.abs(h);}
@@ -601,6 +723,7 @@ function sr(s,mn,mx){const x=Math.sin(s)*10000;return mn+Math.floor((x-Math.floo
 const S={
   apiId:'',apiSecret:'',isLive:false,
   ovPeriod:'2w',selCity:null,cyPeriod:'2w',selKw:null,kwPeriod:'2w',
+  stP:'2w',stT:'all',
   charts:{},cache:{},_toastTimer:null
 };
 
@@ -735,6 +858,7 @@ function goPage(pg){
   document.querySelectorAll('.nav-item[id^="nav-"]').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+pg).classList.add('active');
   document.getElementById('nav-'+pg).classList.add('active');
+  if(pg==='stay')renderStay(S.stP,S.stT);
 }
 
 async function saveApi(){
@@ -771,6 +895,7 @@ function renderCurrentPage(){
   const active=document.querySelector('.page.active');
   if(!active)return;
   if(active.id==='page-overview')renderOverview(S.ovPeriod);
+  else if(active.id==='page-stay')renderStay(S.stP,S.stT);
   else if(active.id==='page-city'&&S.selCity)renderCity(S.selCity,S.cyPeriod);
   else if(active.id==='page-keyword'&&S.selKw)renderKeyword(S.selKw,S.kwPeriod);
 }
@@ -843,6 +968,104 @@ function demoSpark(containerId,key,period){
     return(d.getMonth()+1)+'/'+(d.getDate());
   });
   renderSpark(containerId,vals,labels);
+}
+
+// ── STAY 숙소 수요 ────────────────────────────────────────────
+function plabel(p){return p==='2w'?'2주':p==='1m'?'1개월':p==='3m'?'3개월':'1년';}
+function miniSpark(key){
+  const vals=Array.from({length:7},(_,i)=>sr(seed(key+i+'ms'),10,100));
+  const mx=Math.max(...vals);
+  return`<div class="mini-spark">${vals.map(v=>{const h=Math.max(2,Math.round(v/mx*20));const c=v>70?'#16a34a':v>40?'#2563eb':'#d1d5db';return`<div class="ms-bar" style="height:${h}px;background:${c}"></div>`;}).join('')}</div>`;
+}
+function getCombos(p){
+  return CITIES.flatMap(city=>STAY_TYPES.map(type=>{
+    const key=city.name+type+p;
+    return{city:city.name,region:city.region,type,score:sr(seed(key+'sc'),15,95),chg:sr(seed(key+'ch'),-30,40),key};
+  }));
+}
+function stPeriod(btn,p){
+  document.querySelectorAll('#page-stay .ptab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');S.stP=p;renderStay(p,S.stT);
+}
+function stType(btn,type){
+  document.querySelectorAll('.sttab').forEach(t=>{t.classList.remove('on','on-all');});
+  btn.classList.add(type==='all'?'on-all':'on');S.stT=type;renderStay(S.stP,type);
+}
+function renderStay(p,tf){
+  document.getElementById('st-period-label').textContent=plabel(p);
+  let combos=getCombos(p);
+  if(tf!=='all')combos=combos.filter(c=>c.type===tf);
+  const rising=[...combos].sort((a,b)=>b.chg-a.chg).slice(0,15);
+  const falling=[...combos].sort((a,b)=>a.chg-b.chg).slice(0,15);
+  const top=rising[0];
+  const typeAvg={};
+  STAY_TYPES.forEach(t=>{const tc=combos.filter(c=>c.type===t);typeAvg[t]=tc.length?Math.round(tc.reduce((s,c)=>s+c.score,0)/tc.length):0;});
+  const topType=Object.entries(typeAvg).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
+  const cityAvg={};
+  CITIES.forEach(city=>{const cc=combos.filter(c=>c.city===city.name);cityAvg[city.name]=cc.length?Math.round(cc.reduce((s,c)=>s+c.score,0)/cc.length):0;});
+  const topCity=Object.entries(cityAvg).sort((a,b)=>b[1]-a[1])[0]?.[0]||'—';
+  document.getElementById('st-total').textContent=combos.length;
+  document.getElementById('st-top1').textContent=top?top.city+' '+top.type:'—';
+  document.getElementById('st-toptype').textContent=topType;
+  document.getElementById('st-topcity').textContent=topCity;
+
+  // 히트맵
+  const dispTypes=tf==='all'?STAY_TYPES:[tf];
+  const maxSc=Math.max(...combos.map(c=>c.score),1);
+  const cols=80+dispTypes.length*120;
+  let html=`<div style="display:grid;grid-template-columns:80px ${dispTypes.map(()=>'1fr').join(' ')};gap:4px;min-width:${cols}px;">`;
+  html+=`<div></div>`;
+  dispTypes.forEach(t=>{html+=`<div style="font-size:11px;font-weight:600;color:${TC[t]};text-align:center;padding:6px 4px;">${t}</div>`;});
+  CITIES.forEach(city=>{
+    html+=`<div style="font-size:12px;font-weight:500;padding:5px 0;display:flex;align-items:center;white-space:nowrap;">${city.name}</div>`;
+    dispTypes.forEach(type=>{
+      const combo=combos.find(c=>c.city===city.name&&c.type===type);
+      if(!combo){html+=`<div></div>`;return;}
+      const op=(0.35+combo.score/maxSc*0.65).toFixed(2);
+      const border=combo.chg>15?`border:2px solid ${TC[type]}`:'border:1px solid rgba(0,0,0,.06)';
+      html+=`<div class="heat-cell" style="background:${TB[type]};opacity:${op};${border}" onclick="searchKeyword('${city.name} ${type}')">
+        <div class="hc-city" style="color:${TC[type]}">${city.name}</div>
+        <div class="hc-type" style="color:${TC[type]}">${type}</div>
+        <div class="hc-score" style="color:${TC[type]}">${combo.score}</div>
+        <div class="hc-chg" style="color:${combo.chg>=0?'var(--green)':'var(--red)'}">${combo.chg>=0?'+':''}${combo.chg}%</div>
+      </div>`;
+    });
+  });
+  html+='</div>';
+  document.getElementById('stHeatmap').innerHTML=html;
+
+  // 테이블
+  document.getElementById('stRisingBody').innerHTML=rising.map((r,i)=>`
+    <tr onclick="searchKeyword('${r.city} ${r.type}')">
+      <td>${i+1}</td><td class="fw">${r.city}</td>
+      <td><span class="type-pill tp-${r.type}">${r.type}</span></td>
+      <td><strong>${r.score}</strong></td>
+      <td><span class="badge up">+${r.chg}%</span></td>
+      <td>${miniSpark(r.key+'r')}</td>
+    </tr>`).join('');
+  document.getElementById('stFallingBody').innerHTML=falling.map((r,i)=>`
+    <tr onclick="searchKeyword('${r.city} ${r.type}')">
+      <td>${i+1}</td><td class="fw">${r.city}</td>
+      <td><span class="type-pill tp-${r.type}">${r.type}</span></td>
+      <td><strong>${r.score}</strong></td>
+      <td><span class="badge dn">${r.chg}%</span></td>
+      <td>${miniSpark(r.key+'f')}</td>
+    </tr>`).join('');
+
+  // 차트
+  mkBar('stTypeChart',STAY_TYPES,STAY_TYPES.map(t=>typeAvg[t]),STAY_TYPES.map(t=>TC[t]));
+  const cityTop10=Object.entries(cityAvg).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  mkBar('stCityChart',cityTop10.map(e=>e[0]),cityTop10.map(e=>e[1]),cityTop10.map((_,i)=>COLORS[i%10]));
+  const top5=rising.slice(0,5);
+  const {n,labelFn}=getPoints(p);
+  const labs=Array.from({length:n},(_,i)=>labelFn(i));
+  mkLine('stTrendChart',labs,top5.map(r=>({
+    label:`${r.city} ${r.type}`,
+    data:Array.from({length:n},(_,j)=>sr(seed(r.key+j+'tr'),15,90)),
+    borderColor:TC[r.type],backgroundColor:'transparent',
+    borderWidth:2,pointRadius:p==='2w'?3:2,tension:.4
+  })),{h:'220px'});
+  document.getElementById('stTrendLegend').innerHTML=top5.map(r=>`<div class="legend-item"><span class="legend-sq" style="background:${TC[r.type]}"></span>${r.city} ${r.type}</div>`).join('');
 }
 
 // ── OVERVIEW ─────────────────────────────────────────────────
@@ -976,6 +1199,19 @@ function _drawOverview(p,cdm,chartData){
   document.getElementById('ovLegend').innerHTML=top5.map((c,i)=>
     `<div class="legend-item"><span class="legend-sq" style="background:${COLORS[i]}"></span>${c.name}</div>`
   ).join('');
+
+  // 숙소 수요 요약
+  document.getElementById('ov-stay-period-label').textContent=plabel(p);
+  const typeAvgOv={};
+  STAY_TYPES.forEach(t=>{const tc=getCombos(p).filter(c=>c.type===t);typeAvgOv[t]=tc.length?Math.round(tc.reduce((s,c)=>s+c.score,0)/tc.length):0;});
+  mkBar('ovStayTypeChart',STAY_TYPES,STAY_TYPES.map(t=>typeAvgOv[t]),STAY_TYPES.map(t=>TC[t]),{h:'180px'});
+  const stayRising=[...getCombos(p)].sort((a,b)=>b.chg-a.chg).slice(0,5);
+  document.getElementById('ov-stay-rising').innerHTML=stayRising.map((r,i)=>`
+    <div class="kw-row" onclick="searchKeyword('${r.city} ${r.type}')">
+      <span class="kw-rank">${i+1}</span>
+      <span class="kw-name">${r.city} <span class="type-pill tp-${r.type}" style="margin-left:4px">${r.type}</span></span>
+      <span class="badge up">+${r.chg}%</span>
+    </div>`).join('');
 }
 
 // ── CITY ─────────────────────────────────────────────────────
