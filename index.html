@@ -188,10 +188,14 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
       <div class="metric"><div class="metric-val" id="ov-flat" style="color:var(--text2)">—</div><div class="metric-lbl">보합 지역</div></div>
     </div>
 
-    <div class="g2">
+    <div class="g3">
       <div class="panel">
         <div class="panel-title">🔥 뜨는 지역 TOP 10</div>
         <div class="rank-list" id="ov-rising"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">📊 검색량 상위 TOP 10</div>
+        <div class="rank-list" id="ov-topvol"></div>
       </div>
       <div class="panel">
         <div class="panel-title">📉 지는 지역 TOP 10</div>
@@ -898,6 +902,19 @@ function _drawOverview(p,cdm,chartData){
       <div class="rank-bar-bg"><div class="rank-bar" style="width:${Math.round(Math.abs(c.chg)/maxF*100)}%;background:#ef4444"></div></div>
       <span style="font-size:11px;color:var(--text2);min-width:24px;text-align:right;font-variant-numeric:tabular-nums">${c.score}</span>
       <span class="rank-pct" style="color:var(--red)">${c.chg}%</span>
+    </div>`).join('');
+
+  const doName2={'수도권':'수도권','강원':'강원도','경상':'경상도','전라':'전라도','충청':'충청도','제주':'제주도'};
+  const topvol=[...scored].sort((a,b)=>b.score-a.score).slice(0,10);
+  const maxV=Math.max(...topvol.map(c=>c.score),1);
+  document.getElementById('ov-topvol').innerHTML=topvol.map((c,i)=>`
+    <div class="rank-row" onclick="selectCity('${c.name}')">
+      <span class="rank-num">${i+1}</span>
+      <span class="rank-dot" style="background:${COLORS[i%COLORS.length]}"></span>
+      <span class="rank-name">${c.name}</span>
+      <span class="rank-region" style="font-size:10px;color:var(--text3)">${doName2[c.region]||c.region}</span>
+      <div class="rank-bar-bg"><div class="rank-bar" style="width:${Math.round(c.score/maxV*100)}%;background:${COLORS[i%COLORS.length]}"></div></div>
+      <span class="rank-pct" style="color:var(--accent);font-variant-numeric:tabular-nums">${c.score}</span>
     </div>`).join('');
 
   const allKw=[];
