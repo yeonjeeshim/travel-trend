@@ -191,6 +191,9 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
     <div class="nav-item" onclick="goPage('keyword')" id="nav-keyword">
       <span class="nav-icon">🔍</span> 키워드 검색
     </div>
+    <div class="nav-item" onclick="goPage('ranking')" id="nav-ranking">
+      <span class="nav-icon">🏆</span> 숙박 인기검색어
+    </div>
     <div class="nav-section-label" style="margin-top:8px;">도시 바로가기</div>
     <div id="cityNav"></div>
   </div>
@@ -446,6 +449,117 @@ body{font-family:'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic','Gulim',sa
       <div class="panel mb14">
         <div class="panel-title">연관 키워드 비교</div>
         <div class="chart-wrap" style="height:200px;"><canvas id="kwBarChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE: 숙박 인기검색어 -->
+  <div class="page" id="page-ranking">
+    <div class="page-title">숙박 인기검색어</div>
+    <div class="page-sub">네이버 쇼핑인사이트 — 국내숙박 카테고리 인기 검색어 TOP 500</div>
+
+    <!-- 필터 -->
+    <div class="panel mb14">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:start;">
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">기간</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <button class="ptab on" onclick="rkPeriod(this,'1w')" id="rk-p-1w">1주</button>
+            <button class="ptab" onclick="rkPeriod(this,'1m')" id="rk-p-1m">1개월</button>
+            <button class="ptab" onclick="rkPeriod(this,'3m')" id="rk-p-3m">3개월</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">기기</div>
+          <div style="display:flex;gap:4px;">
+            <button class="ptab on" onclick="rkFilter('device',this,'')">전체</button>
+            <button class="ptab" onclick="rkFilter('device',this,'pc')">PC</button>
+            <button class="ptab" onclick="rkFilter('device',this,'mo')">모바일</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">성별</div>
+          <div style="display:flex;gap:4px;">
+            <button class="ptab on" onclick="rkFilter('gender',this,'')">전체</button>
+            <button class="ptab" onclick="rkFilter('gender',this,'f')">여성</button>
+            <button class="ptab" onclick="rkFilter('gender',this,'m')">남성</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">연령</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            <button class="ptab on" onclick="rkFilter('age',this,'')">전체</button>
+            <button class="ptab" onclick="rkFilter('age',this,'10')">10대</button>
+            <button class="ptab" onclick="rkFilter('age',this,'20')">20대</button>
+            <button class="ptab" onclick="rkFilter('age',this,'30')">30대</button>
+            <button class="ptab" onclick="rkFilter('age',this,'40')">40대</button>
+            <button class="ptab" onclick="rkFilter('age',this,'50')">50대</button>
+            <button class="ptab" onclick="rkFilter('age',this,'60')">60대+</button>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+        <button onclick="loadRanking()" style="background:var(--accent);color:#fff;border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;">🔍 조회하기</button>
+        <div id="rk-status" style="font-size:12px;color:var(--text3);">API 키 입력 후 조회하면 실제 데이터를 불러옵니다</div>
+      </div>
+    </div>
+
+    <!-- 상단 지표 -->
+    <div class="g4 mb14" id="rk-metrics" style="display:none">
+      <div class="metric"><div class="metric-val ac" id="rk-total">—</div><div class="metric-lbl">조회 키워드 수</div></div>
+      <div class="metric"><div class="metric-val up" id="rk-top1">—</div><div class="metric-lbl">1위 키워드</div></div>
+      <div class="metric"><div class="metric-val" id="rk-period-lbl" style="color:var(--amber)">—</div><div class="metric-lbl">조회 기간</div></div>
+      <div class="metric"><div class="metric-val ac" id="rk-page-info">—</div><div class="metric-lbl">페이지</div></div>
+    </div>
+
+    <div class="g2 mb14" id="rk-charts" style="display:none">
+      <div class="panel">
+        <div class="panel-title">TOP 20 키워드 검색량 비교</div>
+        <div class="chart-wrap" style="height:280px;"><canvas id="rkBarChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">클릭량 추이</div>
+        <div class="chart-wrap" style="height:280px;"><canvas id="rkLineChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- 키워드 랭킹 테이블 -->
+    <div class="panel mb14">
+      <div class="panel-title" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>🏆 인기 검색어 랭킹 <span id="rk-count-label" style="color:var(--accent)"></span></span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input id="rk-search-filter" type="text" placeholder="키워드 필터..." style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-family:inherit;" oninput="filterRkTable()"/>
+          <div style="display:flex;gap:4px;">
+            <button onclick="rkPage(-1)" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;font-size:12px;">◀</button>
+            <span id="rk-page-display" style="font-size:12px;color:var(--text2);padding:4px 8px;"></span>
+            <button onclick="rkPage(1)" style="padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface);cursor:pointer;font-size:12px;">▶</button>
+          </div>
+        </div>
+      </div>
+      <div id="rk-loading" style="text-align:center;padding:40px;color:var(--text3);display:none;">
+        <div style="font-size:24px;margin-bottom:8px;">⏳</div>
+        <div>데이터 불러오는 중...</div>
+      </div>
+      <div id="rk-empty" style="text-align:center;padding:40px;color:var(--text3);">
+        <div style="font-size:32px;margin-bottom:8px;">🏆</div>
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px;">조회하기를 눌러 인기 검색어를 확인하세요</div>
+        <div style="font-size:12px;">API 키 없이도 데모 데이터로 미리 볼 수 있어요</div>
+        <button onclick="loadRankingDemo()" style="margin-top:12px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:7px 16px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;">데모로 미리보기</button>
+      </div>
+      <div id="rk-table-wrap" style="display:none;overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;" id="rkTable">
+          <thead>
+            <tr style="border-bottom:1px solid var(--border);">
+              <th style="font-size:11px;color:var(--text3);padding:8px 10px;text-align:left;width:50px;">#</th>
+              <th style="font-size:11px;color:var(--text3);padding:8px 10px;text-align:left;">키워드</th>
+              <th style="font-size:11px;color:var(--text3);padding:8px 10px;text-align:right;width:80px;">검색량</th>
+              <th style="font-size:11px;color:var(--text3);padding:8px 10px;text-align:center;width:80px;">순위변동</th>
+              <th style="font-size:11px;color:var(--text3);padding:8px 10px;text-align:center;width:100px;">트렌드</th>
+              <th style="font-size:11px;color:var(--text3);padding:8px 10px;text-align:center;width:80px;">분석</th>
+            </tr>
+          </thead>
+          <tbody id="rkTableBody"></tbody>
+        </table>
       </div>
     </div>
   </div>
@@ -724,6 +838,7 @@ const S={
   apiId:'',apiSecret:'',isLive:false,
   ovPeriod:'2w',selCity:null,cyPeriod:'2w',selKw:null,kwPeriod:'2w',
   stP:'2w',stT:'all',
+  rkPeriod:'1w',rkDevice:'',rkGender:'',rkAge:'',rkPage:1,rkData:[],rkFiltered:[],rkLoaded:false,
   charts:{},cache:{},_toastTimer:null
 };
 
@@ -859,6 +974,7 @@ function goPage(pg){
   document.getElementById('page-'+pg).classList.add('active');
   document.getElementById('nav-'+pg).classList.add('active');
   if(pg==='stay')renderStay(S.stP,S.stT);
+  if(pg==='ranking' && !S.rkLoaded) { }
 }
 
 async function saveApi(){
@@ -1403,6 +1519,215 @@ function _drawKeyword(kw,p,parsed){
   const top8=related.slice(0,8);
   mkBar('kwBarChart',top8.map(r=>r.name.replace(kw+' ','')),top8.map(r=>r.score),
     top8.map(r=>r.score>60?'#16a34a':'#2563eb'),{h:'200px'});
+}
+
+// ══ RANKING 숙박 인기검색어 ══
+const RK_CATEGORY = '50007254'; // 국내숙박
+
+function rkPeriod(btn, p) {
+  document.querySelectorAll('#rk-p-1w, #rk-p-1m, #rk-p-3m').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on'); S.rkPeriod = p;
+}
+function rkFilter(type, btn, val) {
+  const group = btn.parentElement;
+  group.querySelectorAll('.ptab').forEach(t=>t.classList.remove('on'));
+  btn.classList.add('on');
+  if(type==='device') S.rkDevice=val;
+  else if(type==='gender') S.rkGender=val;
+  else if(type==='age') S.rkAge=val;
+}
+function rkPage(dir) {
+  const maxPage = Math.ceil(S.rkFiltered.length / 20);
+  S.rkPage = Math.max(1, Math.min(maxPage, S.rkPage + dir));
+  renderRkTable();
+}
+function filterRkTable() {
+  const q = document.getElementById('rk-search-filter').value.trim().toLowerCase();
+  S.rkFiltered = q ? S.rkData.filter(r=>r.keyword.toLowerCase().includes(q)) : [...S.rkData];
+  S.rkPage = 1;
+  renderRkTable();
+}
+
+function getRkDates(p) {
+  const end = new Date(), start = new Date();
+  if(p==='1w') start.setDate(start.getDate()-7);
+  else if(p==='1m') start.setMonth(start.getMonth()-1);
+  else start.setMonth(start.getMonth()-3);
+  const fmt = d => d.toISOString().slice(0,10);
+  return { startDate: fmt(start), endDate: fmt(end) };
+}
+
+async function loadRanking() {
+  const id = document.getElementById('apiId').value.trim();
+  const secret = document.getElementById('apiSecret').value.trim();
+  if (!id || !secret) {
+    document.getElementById('rk-status').textContent = '⚠ API 키를 먼저 입력하고 저장해주세요';
+    document.getElementById('rk-status').style.color = 'var(--red)';
+    loadRankingDemo(); return;
+  }
+  document.getElementById('rk-loading').style.display = 'block';
+  document.getElementById('rk-empty').style.display = 'none';
+  document.getElementById('rk-table-wrap').style.display = 'none';
+  document.getElementById('rk-status').textContent = '불러오는 중...';
+  document.getElementById('rk-status').style.color = 'var(--text3)';
+
+  const { startDate, endDate } = getRkDates(S.rkPeriod);
+  const allData = [];
+
+  try {
+    for (let page = 1; page <= 25; page++) {
+      const body = {
+        startDate, endDate,
+        timeUnit: 'date',
+        category: RK_CATEGORY,
+        device: S.rkDevice,
+        gender: S.rkGender,
+        ages: S.rkAge ? [S.rkAge] : [],
+        page, count: 20
+      };
+      const res = await fetch('https://openapi.naver.com/v1/datalab/shopping/category/keywords', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Naver-Client-Id': id,
+          'X-Naver-Client-Secret': secret,
+        },
+        body: JSON.stringify(body)
+      });
+      if (!res.ok) throw new Error('API ' + res.status);
+      const data = await res.json();
+      const keywords = data.results?.[0]?.data || [];
+      if (!keywords.length) break;
+      keywords.forEach((k, i) => {
+        allData.push({ rank: (page-1)*20 + i + 1, keyword: k.period || k.keyword || k.title || JSON.stringify(k), ratio: k.ratio || 0 });
+      });
+      document.getElementById('rk-status').textContent = `${allData.length}개 로드 중...`;
+    }
+    S.rkData = allData;
+    S.rkFiltered = [...allData];
+    S.rkPage = 1;
+    S.rkLoaded = true;
+    renderRkResult(startDate, endDate);
+    document.getElementById('rk-status').textContent = `✓ ${allData.length}개 키워드 로드 완료`;
+    document.getElementById('rk-status').style.color = 'var(--green)';
+  } catch(e) {
+    document.getElementById('rk-status').textContent = '⚠ API 오류 — 데모 데이터로 표시합니다 (' + e.message + ')';
+    document.getElementById('rk-status').style.color = 'var(--red)';
+    loadRankingDemo();
+  }
+}
+
+function loadRankingDemo() {
+  const DEMO_KW = [
+    '국내온천여행','워터파크리조트','오아시스520','레고랜드','하이원리조트',
+    '홍천비발디파크','풀빌라','쿨러킬리파크','글램핑','천안소노벨',
+    '에버랜드홀브런치','삼척쏠비치','경주소노캄','제주한달살기숙소','고성원덤호텔',
+    '전주한옥마을숙소','국내올인클루시브','세인트더스위트양양','리앤블스튜디오','제주도한달살기숙소',
+    '강원도펜션','제주도풀빌라','부산호텔추천','경주펜션','강릉숙소',
+    '여수펜션','속초호텔','통영리조트','전주한옥','남해글램핑',
+    '제주서귀포숙소','강원평창리조트','충청온천숙소','경북안동한옥','전남순천숙소',
+    '인천송도호텔','수원숙소추천','천안호텔','대전숙소','청주호텔',
+    '양양서핑숙소','강릉카라반','제주월정리숙소','부산해운대호텔','경주황리단길숙소',
+    '가평글램핑','포천리조트','파주숙소','연천캠핑','양평펜션',
+  ];
+  const { startDate, endDate } = getRkDates(S.rkPeriod);
+  S.rkData = DEMO_KW.map((kw, i) => ({
+    rank: i+1,
+    keyword: kw,
+    ratio: Math.round(100 - i * 1.8 + sr(seed(kw+'demo'), -3, 3)),
+    prevRank: i + sr(seed(kw+'prev'), -5, 5)
+  }));
+  for(let i=S.rkData.length; i<50; i++) {
+    S.rkData.push({ rank: i+1, keyword: `숙소키워드${i+1}`, ratio: Math.max(5, 50-i), prevRank: i+2 });
+  }
+  S.rkFiltered = [...S.rkData];
+  S.rkPage = 1;
+  S.rkLoaded = true;
+  renderRkResult(startDate, endDate);
+}
+
+function renderRkResult(startDate, endDate) {
+  document.getElementById('rk-loading').style.display = 'none';
+  document.getElementById('rk-empty').style.display = 'none';
+  document.getElementById('rk-table-wrap').style.display = 'block';
+  document.getElementById('rk-metrics').style.display = 'grid';
+  document.getElementById('rk-charts').style.display = 'grid';
+
+  document.getElementById('rk-total').textContent = S.rkData.length;
+  document.getElementById('rk-top1').textContent = S.rkData[0]?.keyword || '—';
+  document.getElementById('rk-period-lbl').textContent = startDate.slice(5) + ' ~ ' + endDate.slice(5);
+  document.getElementById('rk-count-label').textContent = `(총 ${S.rkData.length}개)`;
+
+  const top20 = S.rkData.slice(0,20);
+  destroyChart('rkBarChart');
+  S.charts['rkBarChart'] = new Chart(document.getElementById('rkBarChart'), {
+    type: 'bar',
+    data: {
+      labels: top20.map(r=>r.keyword),
+      datasets: [{ data: top20.map(r=>r.ratio), backgroundColor: top20.map((_,i)=>i<3?'#2563eb':i<10?'#7c3aed':'#9ca3af'), borderRadius: 3 }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ y:{ticks:{color:'#9ca3af',font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}},
+               x:{ticks:{color:'#9ca3af',font:{size:9},maxRotation:40,autoSkip:false},grid:{display:false}} } }
+  });
+
+  const days = 14;
+  const tLabels = Array.from({length:days},(_,i)=>{const d=new Date();d.setDate(d.getDate()-(days-1-i));return(d.getMonth()+1)+'/'+(d.getDate());});
+  const top5kw = S.rkData.slice(0,5);
+  destroyChart('rkLineChart');
+  S.charts['rkLineChart'] = new Chart(document.getElementById('rkLineChart'), {
+    type: 'line',
+    data: { labels: tLabels, datasets: top5kw.map((r,i)=>({
+      label: r.keyword,
+      data: Array.from({length:days},(_,j)=>sr(seed(r.keyword+j+'rkt'),20,100)),
+      borderColor: ['#2563eb','#7c3aed','#16a34a','#d97706','#dc2626'][i],
+      backgroundColor: 'transparent', borderWidth: 2, pointRadius: 2, tension: .4
+    }))},
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:true, labels:{ font:{size:10}, color:'#6b7280', boxWidth:10 } } },
+      scales:{ y:{ticks:{color:'#9ca3af',font:{size:10}},grid:{color:'rgba(0,0,0,.06)'}},
+               x:{ticks:{color:'#9ca3af',font:{size:10},autoSkip:true,maxRotation:0},grid:{display:false}} } }
+  });
+
+  renderRkTable();
+}
+
+function renderRkTable() {
+  const perPage = 20;
+  const total = S.rkFiltered.length;
+  const maxPage = Math.max(1, Math.ceil(total / perPage));
+  S.rkPage = Math.min(S.rkPage, maxPage);
+  const slice = S.rkFiltered.slice((S.rkPage-1)*perPage, S.rkPage*perPage);
+
+  document.getElementById('rk-page-display').textContent = `${S.rkPage} / ${maxPage}`;
+  document.getElementById('rk-page-info').textContent = `${S.rkPage}/${maxPage}p`;
+
+  const tbody = document.getElementById('rkTableBody');
+  tbody.innerHTML = slice.map(r => {
+    const diff = r.prevRank != null ? r.prevRank - r.rank : null;
+    const diffHtml = diff == null ? '<span style="color:var(--text3)">—</span>'
+      : diff > 0 ? `<span style="color:var(--green)">▲${diff}</span>`
+      : diff < 0 ? `<span style="color:var(--red)">▼${Math.abs(diff)}</span>`
+      : `<span style="color:var(--text3)">—</span>`;
+    const barW = Math.round(r.ratio);
+    return `<tr style="border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <td style="padding:9px 10px;font-size:13px;font-weight:600;color:${r.rank<=3?'var(--accent)':'var(--text3)'};">${r.rank<=3?['🥇','🥈','🥉'][r.rank-1]:r.rank}</td>
+      <td style="padding:9px 10px;font-size:13px;font-weight:500;">${r.keyword}</td>
+      <td style="padding:9px 10px;text-align:right;">
+        <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+          <div style="width:60px;height:4px;background:var(--surface2);border-radius:2px;overflow:hidden;">
+            <div style="width:${barW}%;height:100%;background:var(--accent);border-radius:2px;"></div>
+          </div>
+          <span style="font-size:12px;font-weight:500;width:24px;text-align:right;">${r.ratio}</span>
+        </div>
+      </td>
+      <td style="padding:9px 10px;text-align:center;font-size:12px;font-weight:500;">${diffHtml}</td>
+      <td style="padding:9px 10px;text-align:center;">${miniSpark(r.keyword+'rk')}</td>
+      <td style="padding:9px 10px;text-align:center;">
+        <button onclick="searchKeyword('${r.keyword}')" style="font-size:11px;padding:3px 8px;border:1px solid var(--border);border-radius:5px;background:var(--surface);cursor:pointer;color:var(--accent);">트렌드 →</button>
+      </td>
+    </tr>`;
+  }).join('');
 }
 
 init();
