@@ -891,7 +891,7 @@ function goPage(pg){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-item[id^="nav-"]').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+pg).classList.add('active');
-  document.getElementById('nav-'+pg).classList.add('active');
+  document.getElementById('nav-'+pg)?.classList.add('active');
   if(pg==='stay')renderStay(S.stP,S.stT);
   if(pg==='ranking' && !S.rkLoaded) { }
 }
